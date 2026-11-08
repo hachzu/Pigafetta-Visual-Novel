@@ -53,7 +53,7 @@ function render() {
   }
   const round = room.rounds?.["I-02"];
   if (!round) {
-    status.textContent = "Currently waiting for the voting prompt! Please watch the projector!";
+    status.textContent = "Voting will appear here! Please keep an eye on the projector.";
     question.textContent = "";
     timer.textContent = "";
     choices.replaceChildren();

@@ -5,7 +5,7 @@
     "rooms": {
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.child('hostUid').val() === auth.uid && newData.child('hostUid').val() === auth.uid))",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || (data.child('hostUid').val() === auth.uid && (!newData.exists() || newData.child('hostUid').val() === auth.uid)))",
         ".validate": "newData.hasChildren(['hostUid', 'expiresAt']) && newData.child('hostUid').isString() && newData.child('expiresAt').isNumber() && newData.child('expiresAt').val() <= now + 43200000",
         "rounds": {
           "$round": {
@@ -15,6 +15,12 @@
                 ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1 || newData.val() === 2)"
               }
             }
+          }
+        }
+        ,"presence": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && auth.uid !== root.child('rooms').child($code).child('hostUid').val() && root.child('rooms').child($code).child('expiresAt').val() > now",
+            ".validate": "newData.val() === true"
           }
         }
       }

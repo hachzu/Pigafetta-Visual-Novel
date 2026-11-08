@@ -3,19 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Join the voyage · Audience voting</title>
+  <title>Audience voting</title>
   <link rel="stylesheet" href="style.css">
   <script type="module" src="audience.js"></script>
 </head>
 <body>
   <main class="audience-page">
-    <h1>Join the voyage</h1>
     <form id="join-room">
       <label for="room-code">Classroom room code</label>
       <input id="room-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off" placeholder="123456">
       <button>Join room</button>
     </form>
-    <p id="audience-status" role="status" aria-live="polite">Enter the code on the projector.</p>
+    <p id="audience-status" role="status" aria-live="polite"></p>
     <h2 id="audience-question"></h2>
     <p id="audience-timer"></p>
     <section id="audience-choices" aria-label="Vote choices"></section>

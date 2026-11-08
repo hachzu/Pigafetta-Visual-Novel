@@ -42,8 +42,11 @@ choicePanel.className = "story-choices";
 choicePanel.setAttribute("aria-label", "How will you plead with the King of Spain?");
 choicePanel.hidden = true;
 storyScreen.prepend(choicePanel);
+let choiceSelectionOpen = false;
 
 function showSpainChoices() {
+  choiceSelectionOpen = true;
+  storyScreen.classList.add("is-choosing");
   isTyping = false;
   nextDialogue.disabled = true;
   dialoguePanel.classList.remove("is-ready");
@@ -51,6 +54,7 @@ function showSpainChoices() {
   const text = document.getElementById("dialogue-text");
   text.classList.remove("is-direction");
   text.textContent = "How will you plead with the King of Spain?";
+  choicePanel.dataset.prompt = text.textContent;
   choicePanel.replaceChildren();
   if (window.classroom?.isHost()) {
     choicePanel.hidden = false;
@@ -59,7 +63,7 @@ function showSpainChoices() {
   }
   spainChoices.forEach((choice, index) => {
     const button = document.createElement("button");
-    button.textContent = `${String.fromCharCode(65 + index)} — ${choice.label}`;
+    button.textContent = choice.label;
     button.addEventListener("click", () => {
       selectSpainChoice(index);
     });
@@ -70,6 +74,9 @@ function showSpainChoices() {
 }
 
 function selectSpainChoice(index) {
+  if (!choiceSelectionOpen || !activeLines[openingIndex]?.choice || !spainChoices[index]) return;
+  choiceSelectionOpen = false;
+  storyScreen.classList.remove("is-choosing");
   choicePanel.hidden = true;
   activeLines = [...spainChoices[index].lines, ...spainCommon];
   openingIndex = 0;

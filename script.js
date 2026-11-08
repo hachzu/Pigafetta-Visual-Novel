@@ -86,22 +86,26 @@ function updateCharacterSprites(speakingLineStarted = false) {
   const magellanTalking = line.speaker === "Ferdinand Magellan";
   const manuelTalking = line.speaker === (storyLocation === "spain" ? "King Charles I" : "King Manuel I");
   manuelSprite.hidden = storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1);
-  // Poses change only once a line is fully displayed: speakers use their talking pose.
+  // Only entering a talking pose gets the pop animation.
   const nextMagellanFrame = magellanTalking ? 1 : magellanEmotion;
   const nextManuelFrame = manuelTalking ? 1 : manuelEmotion;
   if ((!speakingLineStarted || magellanTalking) && magellanFrame !== nextMagellanFrame) {
     magellanFrame = nextMagellanFrame;
     magellanSprite.style.backgroundPosition = `${nextMagellanFrame * 50}% 0`;
     magellanSprite.classList.remove("pose-pop");
-    void magellanSprite.offsetWidth;
-    magellanSprite.classList.add("pose-pop");
+    if (nextMagellanFrame === 1) {
+      void magellanSprite.offsetWidth;
+      magellanSprite.classList.add("pose-pop");
+    }
   }
   if (!manuelSprite.hidden && (!speakingLineStarted || manuelTalking) && manuelFrame !== nextManuelFrame) {
     manuelFrame = nextManuelFrame;
     manuelSprite.style.backgroundPosition = `${nextManuelFrame * 50}% 0`;
     manuelSprite.classList.remove("pose-pop");
-    void manuelSprite.offsetWidth;
-    manuelSprite.classList.add("pose-pop");
+    if (nextManuelFrame === 1) {
+      void manuelSprite.offsetWidth;
+      manuelSprite.classList.add("pose-pop");
+    }
   }
   magellanSprite.classList.toggle("is-listening", manuelTalking);
   manuelSprite.classList.toggle("is-listening", magellanTalking);
@@ -211,6 +215,7 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   clearInterval(typingTimer);
   clearTimeout(backdropTimer);
   document.querySelector(".story-choices")?.setAttribute("hidden", "");
+  storyScreen.classList.remove("is-choosing");
   transitionLayer.classList.add("is-dark");
   const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
   await new Promise(resolve => setTimeout(resolve, delay));
@@ -239,6 +244,9 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
 function startStory() { changeScene(true); }
 nextDialogue.addEventListener("click", () => {
   if (transitioning) return;
+  // A choice scene may be open while the invisible dialogue button still exists.
+  // Never let a stray click or key press advance past the choice checkpoint.
+  if (activeLines[openingIndex]?.choice) return;
   if (isTyping) {
     clearInterval(typingTimer);
     document.getElementById("dialogue-text").textContent = activeLines[openingIndex].text;

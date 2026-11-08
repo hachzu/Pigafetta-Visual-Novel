@@ -6,7 +6,7 @@ const status = document.getElementById("audience-status");
 const question = document.getElementById("audience-question");
 const timer = document.getElementById("audience-timer");
 const choices = document.getElementById("audience-choices");
-let client, code, room, unsubscribe, clock, sending = false;
+let client, code, room, unsubscribe, clock, presenceRef, sending = false;
 const fromLink = new URL(location.href).searchParams.get("room");
 if (/^\d{6}$/.test(fromLink || "")) input.value = fromLink;
 
@@ -25,6 +25,9 @@ form.addEventListener("submit", async event => {
     if (data.hostUid === client.uid) throw new Error("This browser is the host. Join from an audience device.");
     if (unsubscribe) unsubscribe();
     clearInterval(clock);
+    presenceRef = client.ref(client.db, `rooms/${code}/presence/${client.uid}`);
+    await client.onDisconnect(presenceRef).remove();
+    await client.set(presenceRef, true);
     form.hidden = true;
     unsubscribe = client.onValue(client.ref(client.db, `rooms/${code}`), snapshot => {
       room = snapshot.val();
@@ -32,8 +35,13 @@ form.addEventListener("submit", async event => {
     }, error => { status.textContent = error.message; });
     clock = setInterval(render, 250);
   } catch (error) {
-    status.textContent = `${error.message} If sign-in is blocked, ask the host to enable Firebase Anonymous authentication and publish the voting rules.`;
+    form.hidden = false;
+    status.textContent = "Unable to join. Check the room code or ask the host.";
   } finally { joinButton.disabled = false; }
+});
+
+window.addEventListener("pagehide", () => {
+  if (client && presenceRef) client.remove(presenceRef).catch(() => {});
 });
 
 function render() {
@@ -44,17 +52,31 @@ function render() {
     return;
   }
   const round = room.rounds?.["I-02"];
-  if (!round) { status.textContent = `Room ${code} · Watch the projector. Voting will appear here.`; return; }
+  if (!round) {
+    status.textContent = "Currently waiting for the voting prompt! Please watch the projector!";
+    question.textContent = "";
+    timer.textContent = "";
+    choices.replaceChildren();
+    return;
+  }
   const vote = round.votes?.[client.uid];
   const voted = Number.isInteger(vote);
   const open = round.status === "open" && client.now() < round.endsAt;
   question.textContent = round.question;
-  timer.textContent = open ? `${Math.max(0, Math.ceil((round.endsAt - client.now()) / 1000))} seconds remaining` : "Voting closed";
-  status.textContent = !client.online() ? "Connection lost—reconnecting…" : Number.isInteger(round.winner) ? `Choice ${String.fromCharCode(65 + round.winner)} won. Watch the projector!` : voted ? `Vote ${String.fromCharCode(65 + vote)} confirmed. Your vote is locked.` : open ? "Choose once. One vote per browser." : "Waiting for the host to resolve the result…";
+  timer.textContent = open ? `${Math.max(0, Math.ceil((round.endsAt - client.now()) / 1000))}s` : "";
+  status.textContent = !client.online() ? "Reconnecting…" : voted && open ? "Vote recorded." : !open ? "Please watch the projector!" : "";
   if (!choices.children.length) {
     round.options.forEach((label, index) => {
       const button = document.createElement("button");
-      button.textContent = `${String.fromCharCode(65 + index)} — ${label}`;
+      button.className = "dialogue-panel audience-choice dialogue-enter";
+      button.style.animationDelay = `${index * 80}ms`;
+      const pattern = document.createElement("span");
+      pattern.className = "dialogue-icons";
+      pattern.setAttribute("aria-hidden", "true");
+      const copy = document.createElement("span");
+      copy.className = "audience-choice-copy";
+      copy.textContent = label;
+      button.append(pattern, copy);
       button.addEventListener("click", () => castVote(index));
       choices.append(button);
     });
@@ -77,4 +99,4 @@ async function castVote(index) {
   finally { sending = false; render(); }
 }
 
-if (input.value) form.requestSubmit();
+if (input.value) { form.hidden = true; form.requestSubmit(); }

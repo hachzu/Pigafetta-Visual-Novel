@@ -33,7 +33,7 @@ function game() {
 test('each of the three choices joins the same common sequence and saves branch', () => {
   for(let index=0;index<3;index++) {
     const g=game();
-    g.run(`storyLocation='spain'; selectSpainChoice(${index});`);
+    g.run(`storyLocation='spain'; activeLines=spainOpening; openingIndex=2; choiceSelectionOpen=true; selectSpainChoice(${index});`);
     assert.equal(g.run('activeLines.length'),10);
     assert.equal(g.run('activeLines[4].text'),'(Magellan continues explaining the political and economic advantages of the voyage.)');
     const save=JSON.parse(g.storage.get('pigafetta-save'));
@@ -44,7 +44,7 @@ test('each of the three choices joins the same common sequence and saves branch'
 
 test('Continue restores the saved line and selected branch', async () => {
   const g=game();
-  g.run("storyLocation='spain'; selectSpainChoice(2); openingIndex=5; saveProgress(); activeLines=palaceLines; storyLocation='portugal'; openingIndex=0;");
+  g.run("storyLocation='spain'; activeLines=spainOpening; openingIndex=2; choiceSelectionOpen=true; selectSpainChoice(2); openingIndex=5; saveProgress(); activeLines=palaceLines; storyLocation='portugal'; openingIndex=0;");
   await g.run('continueSavedGame()');
   assert.equal(g.run('storyLocation'),'spain');
   assert.equal(g.run('openingIndex'),5);

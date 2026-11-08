@@ -18,9 +18,11 @@ document.body.append(dialog);
 const message = dialog.querySelector("#room-message");
 const errorText = error => `${error.message} Check that Anonymous sign-in is enabled and database.rules.json has been published in Firebase.`;
 let seconds = 30;
+const stopHostingButton = document.getElementById("classroom-stop");
 
 document.getElementById("classroom-host").onclick = () => dialog.showModal();
 document.getElementById("classroom-join").onclick = () => { location.href = "audience.html"; };
+stopHostingButton.onclick = stopHosting;
 dialog.querySelector("#close-room-dialog").onclick = () => dialog.close();
 dialog.querySelector("#create-room").onclick = async event => {
   event.target.disabled = true;
@@ -48,6 +50,7 @@ dialog.querySelector("#create-room").onclick = async event => {
 function attachRoom(code) {
   if (stopRoom) stopRoom();
   roomCode = code;
+  stopHostingButton.hidden = false;
   banner.hidden = false;
   const link = new URL("audience.html", location.href);
   link.searchParams.set("room", code);
@@ -58,8 +61,6 @@ function attachRoom(code) {
   anchor.href = link.href;
   anchor.textContent = "Audience join link";
   anchor.target = "_blank";
-  const address = document.createElement("small");
-  address.textContent = link.href;
   const qr = window.qrcode(0, "M");
   qr.addData(link.href);
   qr.make();
@@ -73,16 +74,98 @@ function attachRoom(code) {
   enlarge.onclick = () => qrDialog.showModal();
   qrDialog.querySelector(".large-room-qr").replaceChildren(qrImage.cloneNode());
   qrDialog.querySelector(".qr-room-code").textContent = `Room ${code}`;
-  banner.append(title, qrImage, enlarge, anchor);
+  const header = document.createElement("div");
+  header.className = "room-panel-handle";
+  header.tabIndex = 0;
+  header.setAttribute("aria-label", "Move room panel with arrow keys, or drag");
+  const collapse = document.createElement("button");
+  collapse.className = "room-panel-collapse";
+  collapse.type = "button";
+  collapse.textContent = "−";
+  collapse.setAttribute("aria-label", "Collapse room panel");
+  collapse.setAttribute("aria-expanded", "true");
+  const content = document.createElement("div");
+  content.id = "room-panel-content";
+  collapse.setAttribute("aria-controls", content.id);
+  content.append(qrImage, enlarge, anchor);
+  header.append(title, collapse);
+  banner.append(header, content);
+  collapse.onclick = () => {
+    content.hidden = !content.hidden;
+    collapse.textContent = content.hidden ? "+" : "−";
+    collapse.setAttribute("aria-expanded", String(!content.hidden));
+    collapse.setAttribute("aria-label", content.hidden ? "Expand room panel" : "Collapse room panel");
+    keepRoomPanelOnScreen();
+  };
+  makeRoomPanelDraggable(header);
   stopRoom = client.onValue(client.ref(client.db, `rooms/${code}`), snapshot => {
     room = snapshot.val();
     if (!room || room.hostUid !== client.uid || room.expiresAt < client.now()) {
       roomCode = null;
+      stopHostingButton.hidden = true;
       banner.textContent = "Classroom room expired. Create a new room.";
       return;
     }
     if (pendingChoice) drawVote();
   }, error => { banner.textContent = errorText(error); });
+}
+
+async function stopHosting() {
+  if (!roomCode || !client) return;
+  const stoppedCode = roomCode;
+  stopHostingButton.disabled = true;
+  try {
+    await client.remove(client.ref(client.db, `rooms/${stoppedCode}`));
+  } catch (error) {
+    banner.textContent = errorText(error);
+    return;
+  } finally {
+    stopHostingButton.disabled = false;
+  }
+  if (stopRoom) stopRoom();
+  clearInterval(tick);
+  pendingChoice = null;
+  roomCode = null;
+  room = null;
+  sessionStorage.removeItem("pigafetta-host-room");
+  banner.hidden = true;
+  stopHostingButton.hidden = true;
+  if (!choicePanel.hidden && activeLines[openingIndex]?.choice) showSpainChoices();
+}
+
+function moveRoomPanel(x, y) {
+  banner.style.left = `${Math.max(0, Math.min(x, innerWidth - banner.offsetWidth))}px`;
+  banner.style.top = `${Math.max(0, Math.min(y, innerHeight - banner.offsetHeight))}px`;
+}
+function keepRoomPanelOnScreen() {
+  const rect = banner.getBoundingClientRect();
+  moveRoomPanel(rect.left, rect.top);
+}
+window.addEventListener("resize", keepRoomPanelOnScreen);
+function makeRoomPanelDraggable(handle) {
+  let drag;
+  handle.addEventListener("pointerdown", event => {
+    if (event.target.closest("button") || event.button !== 0) return;
+    const rect = banner.getBoundingClientRect();
+    drag = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add("is-dragging");
+  });
+  handle.addEventListener("pointermove", event => {
+    if (drag) moveRoomPanel(event.clientX - drag.x, event.clientY - drag.y);
+  });
+  const end = () => { drag = null; handle.classList.remove("is-dragging"); };
+  handle.addEventListener("pointerup", end);
+  handle.addEventListener("pointercancel", end);
+  handle.addEventListener("lostpointercapture", end);
+  handle.addEventListener("keydown", event => {
+    if (event.target !== handle) return;
+    const movement = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[event.key];
+    if (!movement) return;
+    event.preventDefault();
+    const rect = banner.getBoundingClientRect();
+    moveRoomPanel(rect.left + movement[0], rect.top + movement[1]);
+  });
 }
 
 async function openVote(panel, choices, complete) {
@@ -115,23 +198,26 @@ function drawVote() {
   const { counts, total, leaders } = tally(round);
   const left = Math.max(0, Math.ceil((round.endsAt - client.now()) / 1000));
   const panel = pendingChoice.panel;
+  const audienceCount = Object.keys(room?.presence || {}).filter(uid => uid !== client.uid).length;
+  const hostCanChoose = round.status === "open" && audienceCount === 0;
   // Keep the focused tiebreak buttons stable while the timer updates.
-  if (panel.dataset.voteState !== round.status) {
+  const voteState = `${round.status}-${hostCanChoose}`;
+  if (panel.dataset.voteState !== voteState) {
     panel.replaceChildren();
-    panel.dataset.voteState = round.status;
+    panel.dataset.voteState = voteState;
     const status = document.createElement("p");
     status.className = "vote-status";
     panel.append(status);
     pendingChoice.choices.forEach((choice, index) => {
       const button = document.createElement("button");
-      button.disabled = round.status !== "tie" || !leaders.includes(index);
-      button.onclick = () => chooseWinner(index);
+      button.disabled = hostCanChoose ? false : round.status !== "tie" || !leaders.includes(index);
+      button.onclick = () => chooseWinner(index, hostCanChoose);
       panel.append(button);
     });
   }
-  panel.querySelector(".vote-status").textContent = !client.online() ? "Connection lost—reconnecting…" : round.status === "tie" ? `${total} votes · ${total ? "Tie" : "No votes"} — host, select a highlighted choice` : `${left}s remaining · ${total} votes`;
+  panel.querySelector(".vote-status").textContent = !client.online() ? "Connection lost—reconnecting…" : hostCanChoose ? "No audience connected — host, choose a path" : round.status === "tie" ? `${total} votes · ${total ? "Tie" : "No votes"} — host, select a highlighted choice` : `${left}s remaining · ${total} votes`;
   [...panel.querySelectorAll("button")].forEach((button, index) => {
-    button.textContent = `${String.fromCharCode(65 + index)} — ${pendingChoice.choices[index].label}   (${counts[index]})`;
+    button.textContent = `${pendingChoice.choices[index].label} (${counts[index]})`;
   });
   if (left === 0 && round.status === "open" && !closing && client.online()) closeVote();
 }
@@ -150,10 +236,13 @@ async function closeVote() {
   finally { closing = false; }
 }
 
-async function chooseWinner(index) {
+async function chooseWinner(index, hostChoice = false) {
   try {
     await client.runTransaction(client.ref(client.db, `rooms/${roomCode}/rounds/I-02`), round => {
-      if (!round || round.status !== "tie" || !tally(round).leaders.includes(index)) return;
+      const noAudience = Object.keys(room?.presence || {}).filter(uid => uid !== client.uid).length === 0;
+      const validTieBreak = round?.status === "tie" && tally(round).leaders.includes(index);
+      const validHostChoice = hostChoice && round?.status === "open" && noAudience;
+      if (!validTieBreak && !validHostChoice) return;
       return { ...round, winner: index, status: "closed" };
     }, { applyLocally: false });
   } catch (error) { banner.textContent = errorText(error); }

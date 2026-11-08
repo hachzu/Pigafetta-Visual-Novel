@@ -1,0 +1,319 @@
+/* Main menu styles */
+
+/* Dialogue uses Redaction 35 by MCKL, with a readable serif fallback. */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Button size. If your plank has a different shape, change these two. */
+  --btn-width: 340px;
+  --btn-height: 62px;   /* matches your plank's roughly 5.6 : 1 shape */
+
+  /* Path to your plank image */
+  --plank-image: url("assets/wooden-button-cropped.png");
+
+  --text-color: #f4ecd8;
+  --accent: #d9a441;
+
+  --title-font: "Cinzel", Georgia, serif;
+  --body-font: "IM Fell English", Georgia, serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--body-font);
+  color: var(--text-color);
+  background: #0e1620;
+}
+
+#main-menu {
+  position: relative;
+  overflow-x: clip;
+  min-height: 100vh;
+
+  /* Keep the shore visible while gently shading the menu foreground. */
+  background:
+    linear-gradient(to bottom, rgba(7, 14, 20, 0.12), rgba(7, 14, 20, 0.3)),
+    url("assets/shore.png") center / cover no-repeat;
+  background-color: #0e1620;
+}
+
+/* ---------- Left pillar ---------- */
+
+.menu-column {
+  min-height: 100vh;
+  width: min(540px, 100%);
+  padding: clamp(28px, 6vh, 68px) 32px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(24px, 5vh, 48px);
+
+  /* Soft dark panel so the pillar reads against any background */
+  background: linear-gradient(to right, rgba(7, 14, 20, 0.88), rgba(7, 14, 20, 0.65) 75%, rgba(7, 14, 20, 0));
+}
+
+.menu-header {
+  text-align: center;
+  width: 100%;
+  max-width: 420px;
+}
+
+.game-title span { display: block; }
+.game-title .title-small { font-size: 14px; letter-spacing: .4em; margin-bottom: 8px; }
+.game-title .title-main { font-size: clamp(32px, 5vw, 49px); letter-spacing: .055em; }
+.game-title .title-bottom { font-size: clamp(20px, 3vw, 29px); letter-spacing: .16em; margin-top: 7px; }
+.menu-header::after { content: ""; display: block; width: 150px; height: 1px; margin: 23px auto 0; background: linear-gradient(to right, transparent, #d8bd82, transparent); }
+
+.game-title {
+  margin: 0;
+  font-family: var(--title-font);
+  font-weight: 700;
+  font-size: clamp(1.8rem, 3.2vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff2ce;
+  text-shadow: 0 2px 4px #000, 0 4px 18px rgba(0, 0, 0, 0.85);
+}
+
+.game-logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.game-subtitle {
+  margin: 0.5rem 0 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--accent);
+  opacity: 1;
+  text-shadow: 0 2px 5px #000;
+}
+
+/* ---------- Chains + buttons ---------- */
+
+.menu-buttons {
+  position: relative;
+  width: min(var(--btn-width), 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  padding-top: 0;
+}
+
+/* One centered chain ends at the plank's left edge, without covering the wood. */
+.menu-btn::before {
+  content: "";
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100vw;
+  height: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='12' viewBox='0 0 32 12'%3E%3Crect x='1' y='2' width='21' height='8' rx='4' fill='none' stroke='%23948872' stroke-width='2'/%3E%3Crect x='17' y='4' width='14' height='4' rx='2' fill='%23564a3a' stroke='%23948872' stroke-width='1'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 32px 12px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.menu-btn {
+  position: relative;
+  z-index: 1;                    /* sit in front of the chains */
+  width: 100%;
+  height: var(--btn-height);
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  background-image: var(--plank-image);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  cursor: pointer;
+  filter: saturate(.72) brightness(1.08) drop-shadow(0 5px 7px rgba(0, 0, 0, 0.55));
+  transition: filter 0.2s ease, transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The connector sits on the edge; the chain itself stays outside the wood. */
+.menu-btn::after {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  transform: translateY(-50%);
+  border: 2px solid #aa9878;
+  border-radius: 50%;
+  background: #302a22;
+  box-shadow: inset 0 0 0 2px #564a3a, 1px 1px 2px #0008;
+  pointer-events: none;
+}
+
+.menu-btn .label {
+  display: inline-block;
+  font-family: var(--title-font);
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-color);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.85);
+  transform: scale(1);
+  transition: transform 0.35s ease, color 0.35s ease;
+}
+
+/* Highlight: the wood warms up a little and the label eases larger */
+.menu-btn:hover:not(:disabled),
+.menu-btn:focus-visible {
+  filter: saturate(.85) brightness(1.23) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.6));
+  transform: translateX(5px);
+}
+
+.menu-btn:focus-visible { outline: 2px solid #ead29b; outline-offset: 5px; border-radius: 12px; }
+.menu-btn:active:not(:disabled) { transform: translateX(3px) scale(.985); }
+
+.menu-btn:hover:not(:disabled) .label,
+.menu-btn:focus-visible .label {
+  transform: scale(1.1);
+  color: #fff6dc;
+}
+
+.menu-btn:active .label {
+  transform: scale(1.04);
+}
+
+.menu-btn:disabled {
+  cursor: not-allowed;
+  filter: brightness(0.8) saturate(0.7) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+.menu-btn:disabled .label {
+  transform: none;
+  opacity: 0.8;
+}
+
+/* ---------- Message line ---------- */
+
+.menu-message {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: 16px;
+  margin: 0;
+  text-align: center;
+  min-height: 1.5em;
+  opacity: 0.85;
+  pointer-events: none;
+  color: #fff2ce;
+  text-shadow: 0 2px 4px #000;
+}
+
+.menu-message:not(:empty) { width: fit-content; max-width: calc(100% - 48px); margin: auto; padding: 10px 18px; background: #0b141be8; border: 1px solid #d8bd8240; border-radius: 4px; }
+
+/* ---------- Smaller screens ---------- */
+
+[hidden] { display: none !important; }
+.intro-screen { position: absolute; inset: 0; z-index: 5; display: grid; place-items: center; overflow: hidden; padding: 10vh clamp(26px, 12vw, 180px); background: #030507; }
+.intro-start { border: 1px solid #b7a57d; color: #eee5d2; background: #090b0c; padding: 17px 34px; font: 15px var(--title-font); letter-spacing: .13em; text-transform: uppercase; cursor: pointer; transition: opacity .8s, transform .8s; }
+.intro-start:hover { background: #151617; }
+.intro-start.is-gone { position: absolute; opacity: 0; pointer-events: none; }
+.intro-copy { position: relative; width: min(820px, 100%); color: #eee9df; font: clamp(19px, 2.2vw, 26px)/1.75 "Redaction 35", Georgia, serif; text-align: center; }
+.intro-copy:empty { display: none; }
+.intro-screen:has(.intro-copy:not(:empty)) { display: flex; align-items: center; justify-content: center; }
+.intro-screen.is-location .intro-copy { display: block; color: #f4ead6; font: clamp(30px, 5vw, 64px)/1.1 var(--title-font); letter-spacing: .08em; text-align: center; }
+.intro-screen.is-location .intro-start { display: none; }
+.intro-paragraph { position: absolute; inset: 50% auto auto 0; width: 100%; margin: 0; opacity: 0; transform: translateY(-50%); transition: opacity 2s ease; pointer-events: none; text-align: center; white-space: normal; overflow-wrap: break-word; }
+.intro-paragraph.is-visible { opacity: 1; }
+.intro-paragraph strong { color: #e4c982; font-weight: 700; }
+.intro-paragraph em { color: #d5dce4; font-style: italic; }
+#scene-transition { position: fixed; inset: 0; background: #05090d; z-index: 100; opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+#scene-transition.is-dark { opacity: 1; pointer-events: auto; }
+.story-screen { min-height: 100svh; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 60px clamp(16px, 5vw, 80px) clamp(20px, 4vh, 48px); }
+.story-screen.is-waiting .dialogue { opacity: 0; visibility: hidden; }
+.story-screen.is-waiting .character-stage { visibility: hidden; }
+.character-stage { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+/* The figures rise from the dialogue's upper edge, rather than sitting at the screen sides. */
+.character-sprite { position: absolute; bottom: calc(clamp(20px, 4vh, 48px) + 185px); width: min(52vh, 39vw); aspect-ratio: 1; background-repeat: no-repeat; background-size: 300% 100%; background-position: 0 0; transition: filter .25s ease, opacity .25s ease; }
+.magellan-sprite { right: 14%; background-image: url("assets/magellan-expressions.png"); transform: scaleX(-1); }
+.manuel-sprite { left: 14%; background-image: url("assets/manuel-expressions.png"); }
+.character-sprite.is-listening { filter: brightness(.78); }
+.story-choices { position: absolute; top: 28px; left: 50%; transform: translateX(-50%); width: min(880px, calc(100% - 150px)); z-index: 5; display: grid; gap: 12px; }
+.story-choices[hidden] { display: none; }
+.story-choices button { padding: 18px 24px; border: 1px solid #c9baa0; border-left: 5px solid #c7a568; border-radius: 8px; background: #111113f5; color: #f2eee5; font: 20px/1.4 Georgia, serif; text-align: left; cursor: pointer; box-shadow: 0 5px 20px #0009; }
+.story-choices button:hover, .story-choices button:focus-visible { background: #302b23; outline: 2px solid #e8dfca; outline-offset: 2px; }
+@media(max-width:600px) { .story-choices button { font-size: 15px; padding: 11px 14px; } }
+.game-menu-toggle { position: fixed; right: 22px; top: 20px; z-index: 40; width: 50px; height: 46px; border: 1px solid #a99a80; border-radius: 6px; background: #101114ed; display: grid; align-content: center; gap: 5px; padding: 11px; cursor: pointer; }
+.game-menu-toggle span { height: 2px; width: 100%; background: #eee5d2; }
+.game-menu-panel { position: fixed; right: 22px; top: 76px; z-index: 41; width: min(320px, calc(100vw - 44px)); background: #101114fa; border: 1px solid #a99a80; border-radius: 8px; padding: 14px; box-shadow: 0 8px 30px #0009; }
+.game-menu-panel button, .classroom-dialog button, .audience-page button { display: block; width: 100%; padding: 13px 16px; margin: 6px 0; background: #252522; color: #f3ead9; border: 1px solid #948772; border-radius: 5px; font: 17px Georgia, serif; cursor: pointer; }
+.game-menu-panel p { font: 14px/1.5 Georgia, serif; color: #d4c7ad; }
+.classroom-dialog { width: min(560px, calc(100% - 32px)); background: #121316; color: #f3ead9; border: 1px solid #b3a185; border-radius: 10px; padding: 28px; }
+.classroom-dialog::backdrop { background: #000b; }
+.classroom-dialog input, .audience-page input { width: 100%; padding: 14px; font: 22px Georgia, serif; margin: 10px 0; }
+.room-banner { position: fixed; top: 14px; left: 18px; z-index: 20; max-width: 270px; padding: 10px 14px; border: 1px solid #a99a80; border-radius: 5px; background: #101114ed; font: 16px/1.5 Georgia, serif; overflow-wrap: anywhere; }
+.room-banner a { color: #f2d9a4; }
+.room-qr { display: block; width: 164px; height: 164px; object-fit: contain; background: white; margin: 10px auto; image-rendering: pixelated; }
+.enlarge-qr { display: block; width: 100%; padding: 8px 12px; margin-bottom: 8px; background: #252522; border: 1px solid #948772; border-radius: 4px; color: #f3ead9; cursor: pointer; font: 15px Georgia, serif; }
+.qr-dialog { width: min(640px, calc(100vw - 32px)); text-align: center; }
+.qr-dialog .room-qr { width: min(460px, 100%); height: auto; aspect-ratio: 1; }
+.qr-room-code { font-size: 28px; letter-spacing: .08em; }
+.vote-status { margin: 0; padding: 12px 18px; background: #111113f5; border: 1px solid #b3a185; border-radius: 6px; font: 19px/1.4 Georgia, serif; text-align: center; }
+.story-choices button:disabled { cursor: default; opacity: .65; }
+.audience-page { max-width: 680px; margin: auto; padding: 30px 20px; font: 20px/1.5 Georgia, serif; }
+.audience-page button { padding: 20px; text-align: left; }
+.audience-page button.selected { border: 2px solid #e4c982; background: #3c3528; }
+@media(max-width:900px) { .room-banner { position: relative; max-width: calc(100% - 90px); } .story-choices { top: 90px; width: calc(100% - 32px); } }
+.magellan-sprite.pose-pop { animation: magellan-pose-pop .34s cubic-bezier(.2,.8,.3,1) both; }
+.manuel-sprite.pose-pop { animation: manuel-pose-pop .34s cubic-bezier(.2,.8,.3,1) both; }
+@keyframes magellan-pose-pop { 0% { transform: scaleX(-1) translateY(14px) scale(.985); } 58% { transform: scaleX(-1) translateY(-7px) scale(1.01); } 100% { transform: scaleX(-1) translateY(0) scale(1); } }
+@keyframes manuel-pose-pop { 0% { transform: translateY(14px) scale(.985); } 58% { transform: translateY(-7px) scale(1.01); } 100% { transform: translateY(0) scale(1); } }
+.dialogue { z-index: 2; }
+@media(max-width:600px) { .character-sprite { bottom: calc(4vh + 220px); width: 58vw; } .magellan-sprite { right: -12%; } .manuel-sprite { left: -12%; } }
+#main-menu.is-palace { background: url("assets/throneroom.png") center / cover no-repeat; }
+#main-menu.is-palace.is-entrance { background-image: url("assets/royal-chambers-entrance.png"); }
+.dialogue { width: 100%; max-width: 1160px; margin: 0 auto; position: relative; }
+.dialogue-enter { animation: dialogue-arrive .65s cubic-bezier(.2,.75,.25,1) both; }
+@keyframes dialogue-arrive { from { opacity: 0; transform: translateY(30px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+#dialogue-speaker { position: absolute; top: 0; left: 24px; transform: translateY(-50%); z-index: 3; margin: 0; padding: 16px 36px 16px 26px; background-color: #e8dfca; background-image: repeating-linear-gradient(7deg, transparent 0 4px, #65563d0c 5px, transparent 6px 10px), repeating-linear-gradient(96deg, transparent 0 7px, #fff8 8px, transparent 9px 15px); border: 1px solid #fff4dc; color: #171512; font: 600 20px "Redaction 35", Georgia, serif; letter-spacing: .045em; text-shadow: 0 1px 0 #fff8; box-shadow: 0 5px 16px #000a; clip-path: polygon(0 0, 99% 0, 100% 5%, 100% 100%, 2% 100%, 0 94%); }
+.dialogue-panel { position: relative; isolation: isolate; overflow: hidden; border-radius: 8px; background: linear-gradient(to bottom, #050505 0%, #050505 76%, rgba(5, 5, 5, .78) 100%); border: 1px solid #aeb5b9; box-shadow: inset 0 0 0 2px #c5c9ca24, 0 0 0 1px #454a4e, 0 10px 28px #0009; padding: 54px clamp(28px, 4vw, 56px) 42px; min-height: 250px; display: flex; align-items: center; }
+.dialogue-panel::after { content: ""; position: absolute; inset: 5px; border-radius: 5px; pointer-events: none; z-index: 2; background: linear-gradient(135deg, transparent 0 49.3%, #090b0d 49.5% 50.5%, transparent 50.7%) top left / 9px 9px no-repeat, linear-gradient(225deg, transparent 0 49.3%, #090b0d 49.5% 50.5%, transparent 50.7%) top right / 9px 9px no-repeat, linear-gradient(45deg, transparent 0 49.3%, #090b0d 49.5% 50.5%, transparent 50.7%) bottom left / 9px 9px no-repeat, linear-gradient(315deg, transparent 0 49.3%, #090b0d 49.5% 50.5%, transparent 50.7%) bottom right / 9px 9px no-repeat; }
+.dialogue-icons { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; opacity: .055; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cpath d='M18 4 32 18 18 32 4 18Z' fill='none' stroke='%239ba0a3' stroke-width='1'/%3E%3C/svg%3E"); background-size: 36px 36px; animation: diamond-roll 18s linear infinite; }
+@keyframes diamond-roll { from { background-position: 0 0; } to { background-position: 144px 0; } }
+#dialogue-text { position: relative; margin: 0; min-height: 5em; max-width: 74ch; color: #f2eee5; font: clamp(20px, 2vw, 25px)/1.65 "Redaction 35", Georgia, serif; pointer-events: none; }
+#dialogue-text.is-direction { color: #d8d5cb; font-style: italic; }
+#dialogue-next { position: absolute; inset: 0; width: 100%; height: 100%; background: transparent; border: 0; cursor: pointer; }
+.continue-cue { position: absolute; right: 26px; bottom: 22px; z-index: 3; width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 10px solid #ded5bf; opacity: 0; pointer-events: none; }
+.dialogue-panel.is-ready .continue-cue { animation: continue-nudge .85s ease-in-out infinite alternate; }
+@keyframes continue-nudge { from { opacity: .45; transform: translateX(0); } to { opacity: 1; transform: translateX(6px); } }
+#dialogue-next:focus-visible { outline: 2px solid #ccc; outline-offset: -5px; }
+@media(max-width:600px) { #dialogue-speaker { left: 16px; padding: 14px 28px 14px 20px; font-size: 18px; } .dialogue-panel { padding: 48px 22px 36px; min-height: 280px; } #dialogue-text { min-height: 6em; font-size: 20px; } }
+@media(prefers-reduced-motion:reduce) { .icon-track { animation: none; } #scene-transition { transition: none; } .dialogue-enter, .character-sprite.pose-pop { animation: none; } .dialogue-panel.is-ready .continue-cue { animation: none; opacity: 1; } }
+@media(prefers-reduced-motion:reduce) { .intro-paragraph, .intro-start { transition: none; } }
+@media (max-width: 700px) {
+  :root {
+    --btn-width: 280px;
+    --btn-height: 50px;
+  }
+
+  .menu-column {
+    width: 100%;
+    background: linear-gradient(to right, rgba(7, 14, 20, .8), rgba(7, 14, 20, .45));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-btn,
+  .menu-btn .label {
+    transition: none;
+    transform: none !important;
+  }
+}

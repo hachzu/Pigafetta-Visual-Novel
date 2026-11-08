@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Magellan Expedition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Redaction+35&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="assets/royal-chambers-entrance.png">
+  <link rel="preload" as="image" href="assets/throneroom.png">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+  <script src="spain.js" defer></script>
+  <script src="intro.js" defer></script>
+  <script src="session.js" defer></script>
+  <script type="module" src="classroom.js"></script>
+  <script src="qrcode.js" defer></script>
+</head>
+<body>
+  <button id="game-menu-toggle" class="game-menu-toggle" aria-label="Open game menu" aria-expanded="false" aria-controls="game-menu-panel"><span></span><span></span><span></span></button>
+  <nav id="game-menu-panel" class="game-menu-panel" aria-label="Game menu" hidden>
+    <button id="resume-game">Resume</button>
+    <button id="return-menu">Back to main menu</button>
+    <button id="classroom-host">Host classroom voting</button>
+    <button id="classroom-join">Join as audience</button>
+    <p id="save-status" role="status"></p>
+  </nav>
+  <main id="main-menu">
+    <section class="menu-column">
+      <header class="menu-header">
+        <h1 class="game-title"><span class="title-small">The</span><span class="title-main">Magellan</span><span class="title-bottom">Expedition</span></h1>
+        <p class="game-subtitle">Through Pigafetta's Eyes</p>
+      </header>
+
+      <nav class="menu-buttons" aria-label="Main menu">
+        <button type="button" class="menu-btn" data-action="new-game"><span class="label">New Game</span></button>
+        <button type="button" class="menu-btn" data-action="continue"><span class="label">Continue</span></button>
+        <button type="button" class="menu-btn" data-action="settings"><span class="label">Settings</span></button>
+        <button type="button" class="menu-btn" data-action="credits"><span class="label">Credits</span></button>
+      </nav>
+    </section>
+
+    <p id="menu-message" class="menu-message" role="status" aria-live="polite"></p>
+    <section id="intro-screen" class="intro-screen" aria-label="Historical introduction" hidden>
+      <button type="button" id="intro-start" class="intro-start">Click to start</button>
+      <div class="intro-copy" aria-live="polite"></div>
+    </section>
+    <section id="story-screen" class="story-screen" aria-label="Story" hidden>
+      <div class="character-stage" aria-label="Characters">
+        <div id="magellan-sprite" class="character-sprite magellan-sprite" role="img" aria-label="Ferdinand Magellan"></div>
+        <div id="manuel-sprite" class="character-sprite manuel-sprite" role="img" aria-label="King Manuel I" hidden></div>
+      </div>
+      <section class="dialogue" aria-label="Dialogue">
+        <h2 id="dialogue-speaker">Ferdinand Magellan</h2>
+        <div class="dialogue-panel">
+          <div class="dialogue-icons" aria-hidden="true"></div>
+          <p id="dialogue-text" aria-live="polite"></p>
+          <span class="continue-cue" aria-hidden="true"></span>
+          <button type="button" id="dialogue-next" aria-label="Advance dialogue"></button>
+        </div>
+      </section>
+    </section>
+  </main>
+  <div id="scene-transition" aria-hidden="true"></div>
+</body>
+</html>

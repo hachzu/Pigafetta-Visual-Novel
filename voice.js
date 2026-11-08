@@ -1,14 +1,25 @@
 "use strict";
 
 // ===== Voice acting =====
-// One clip per voiced line, named by its script ID and stored in voice/ (for example voice/VA2-001.m4a).
-// Mixed file types are fine: each clip is tried with every extension in VOICE_EXTENSIONS, in order,
-// and the first one that exists is used. Edit the two constants below to change the folder or the list.
+// One clip per voiced line, named by its script ID and stored in voice/ (for example voice/[VA2-001].mp3).
+// Mixed file types are fine: each clip is tried with every extension in VOICE_EXTENSIONS, in order.
+// Keep the list of available clips in sync with the files in voice/ to avoid requests for missing clips.
 // Lines are matched by their exact text, so saved games and branches work without changing story.js.
 // If a line's text is edited, update its entry here; a line with no match simply plays silently.
 const VOICE_FOLDER = "voice/";
 const VOICE_EXTENSIONS = [".mp3", ".m4a", ".wav"];
 const VOICE_PREF_KEY = "pigafetta-voice";
+
+const VOICE_CLIPS = new Set([
+  "VA1-001", "VA1-002", "VA1-003", "VA1-004", "VA1-005", "VA1-006", "VA1-007", "VA1-008", "VA1-009",
+  "VA1-010", "VA1-011", "VA1-012", "VA1-013", "VA1-014", "VA1-015", "VA1-016", "VA1-017", "VA1-018",
+  "VA3-001", "VA3-002", "VA3-003", "VA3-004", "VA3-005", "VA3-006", "VA3-007", "VA3-008", "VA3-009", "VA3-010",
+  "VA2-001", "VA2-003", "VA2-004", "VA2-005", "VA2-006", "VA2-007", "VA2-008", "VA2-009", "VA2-010",
+  "VA2-011", "VA2-012", "VA2-013", "VA2-014", "VA2-015", "VA2-016", "VA2-017", "VA2-018", "VA2-019", "VA2-020",
+  "VA2-021", "VA2-022", "VA2-023", "VA2-024", "VA2-025", "VA2-026", "VA2-027", "VA2-028",
+  "VA4-001", "VA4-002", "VA4-003", "VA4-004", "VA4-005", "VA4-006", "VA4-007",
+  "VA5-001", "VA5-002", "LAPU-LAPU"
+]);
 
 const VOICE_LINES = {
   "VA2-001": "Your Majesty! Please, I humbly request an audience!",
@@ -109,7 +120,7 @@ try { voiceOn = localStorage.getItem(VOICE_PREF_KEY) !== "off"; } catch { /* def
 
 // Each entry holds the clip for one line. If its file is missing, the next extension is tried.
 function loadVoiceExtension(entry, index) {
-  const audio = new Audio(`${VOICE_FOLDER}${entry.id}${VOICE_EXTENSIONS[index]}`);
+  const audio = new Audio(`${VOICE_FOLDER}[${entry.id}]${VOICE_EXTENSIONS[index]}`);
   audio.preload = "auto";
   entry.audio = audio;
   audio.addEventListener("error", () => {
@@ -136,14 +147,21 @@ function voiceClipFor(id) {
 function startVoice(entry) {
   if (entry.failed) return;
   try { entry.audio.currentTime = 0; } catch { /* clip not loaded yet */ }
-  entry.audio.play().catch(() => {}); // a missing file or blocked audio must never stop the story
+  entry.audio.play().then(() => {
+    if (voiceEntry !== entry) return;
+    window.setVoiceMusicDucked?.(true);
+    window.setIntroMusicVoiceDucked?.(true);
+  }).catch(() => {}); // a missing file or blocked audio must never stop the story
 }
 
 function stopVoice() {
-  if (!voiceEntry) return;
-  voiceEntry.audio.pause();
-  try { voiceEntry.audio.currentTime = 0; } catch { /* clip not loaded yet */ }
+  if (voiceEntry) {
+    voiceEntry.audio.pause();
+    try { voiceEntry.audio.currentTime = 0; } catch { /* clip not loaded yet */ }
+  }
   voiceEntry = null;
+  window.setVoiceMusicDucked?.(false);
+  window.setIntroMusicVoiceDucked?.(false);
 }
 
 // Plays the line's clip (if it has one) and warms up the next line's clip so it starts without delay.
@@ -151,14 +169,14 @@ function playVoice(line, nextLine) {
   stopVoice();
   if (!voiceOn) return;
   const nextId = voiceIdByText.get(nextLine?.text);
-  if (nextId) voiceClipFor(nextId);
+  if (nextId && VOICE_CLIPS.has(nextId)) voiceClipFor(nextId);
   const id = voiceIdByText.get(line?.text);
-  if (!id) return;
+  if (!id || !VOICE_CLIPS.has(id)) return;
   voiceEntry = voiceClipFor(id);
   startVoice(voiceEntry);
 }
 
-window.voice = { play: playVoice, stop: stopVoice };
+window.voice = { play: playVoice, stop: stopVoice, currentAudio: () => voiceEntry?.audio || null };
 
 const voiceToggle = document.getElementById("voice-toggle");
 function paintVoiceToggle() {

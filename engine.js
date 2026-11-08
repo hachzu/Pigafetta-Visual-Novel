@@ -69,6 +69,10 @@ let storyLocation = "portugal";
 let activeLines = palaceLines;
 let transitioning = false;
 let typingTimer = 0;
+let autoplayTimer = 0;
+let autoplayOn = false;
+const AUTOPLAY_PREF_KEY = "pigafetta-autoplay";
+try { autoplayOn = localStorage.getItem(AUTOPLAY_PREF_KEY) === "on"; } catch { /* default to off */ }
 let isTyping = false;
 let visibleCharacters = 0;
 let skipTypewriter = false;
@@ -169,6 +173,24 @@ palaceMusic.volume = 0;
 let palaceMusicFadeTimer = 0;
 let currentStoryTrack = "palace";
 let lastStoryMusicCue = "";
+let voiceMusicDucked = false;
+let voiceMusicFadeTimer = 0;
+let storyMusicTargetVolume = .3;
+
+function setVoiceMusicDucked(ducked) {
+  voiceMusicDucked = ducked;
+  clearInterval(voiceMusicFadeTimer);
+  const target = palaceMusic.volume === 0 && ducked ? 0 : ducked ? storyMusicTargetVolume * .12 : storyMusicTargetVolume;
+  const start = palaceMusic.volume;
+  const steps = 8;
+  let step = 0;
+  voiceMusicFadeTimer = setInterval(() => {
+    step++;
+    palaceMusic.volume = Math.max(0, Math.min(1, start + (target - start) * step / steps));
+    if (step >= steps) clearInterval(voiceMusicFadeTimer);
+  }, 25);
+}
+window.setVoiceMusicDucked = setVoiceMusicDucked;
 
 function playSceneMusic(scene, restart = false) {
   const track = ["cebu", "mactan", "actthree", "massacre", "brunei", "tidore", "returnvoyage", "homecoming"].includes(scene) ? "cebu" : scene === "limasawa" ? "limasawa" : scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
@@ -187,7 +209,8 @@ function playSceneMusic(scene, restart = false) {
     palaceMusic.volume = 0;
   }
   if (restart) { palaceMusic.currentTime = 0; palaceMusic.volume = 0; }
-  palaceMusic.play().then(() => fadePalaceMusic(.3, 1800)).catch(() => {});
+  storyMusicTargetVolume = .3;
+  palaceMusic.play().then(() => fadePalaceMusic(voiceMusicDucked ? .3 * .12 : .3, 1800)).catch(() => {});
 }
 
 function playDrumStrike() {
@@ -214,11 +237,12 @@ function playDrumStrike() {
 function fadePalaceMusic(target, duration = 2000) {
   clearInterval(palaceMusicFadeTimer);
   const start = palaceMusic.volume;
+  const adjustedTarget = voiceMusicDucked ? target * .12 : target;
   const steps = Math.max(1, Math.round(duration / 40));
   let step = 0;
   palaceMusicFadeTimer = setInterval(() => {
     step++;
-    palaceMusic.volume = Math.max(0, Math.min(1, start + (target - start) * step / steps));
+    palaceMusic.volume = Math.max(0, Math.min(1, start + (adjustedTarget - start) * step / steps));
     if (step >= steps) clearInterval(palaceMusicFadeTimer);
   }, 40);
 }
@@ -236,7 +260,8 @@ function playStoryMusicCue(cue) {
     palaceMusic.currentTime = 0;
     palaceMusic.volume = 0;
     currentStoryTrack = "native-arrival";
-    palaceMusic.play().then(() => fadePalaceMusic(.3, 1600)).catch(() => {});
+    storyMusicTargetVolume = .3;
+    palaceMusic.play().then(() => fadePalaceMusic(voiceMusicDucked ? .3 * .12 : .3, 1600)).catch(() => {});
   }, fadeDuration);
 }
 
@@ -319,6 +344,7 @@ function setCebuBackdrop(backdrop = "port") {
 
 function renderOpening() {
   clearInterval(typingTimer);
+  clearTimeout(autoplayTimer);
   window.voice?.stop();
   saveProgress();
   if (storyLocation === "philippines" || storyLocation === "actthree") { renderVoyagePassage(); return; }
@@ -354,9 +380,39 @@ function renderOpening() {
       paintDialogueText(textElement, text.slice(0, visibleCharacters), line.italic);
       if (visibleCharacters >= text.length) { clearInterval(typingTimer); isTyping = false; dialoguePanel.classList.add("is-ready"); }
       if (visibleCharacters >= text.length) updateCharacterSprites();
+      if (visibleCharacters >= text.length) scheduleAutoplay(line);
     }, 24);
-  }
+  } else scheduleAutoplay(line);
 }
+function scheduleAutoplay(line) {
+  clearTimeout(autoplayTimer);
+  if (!autoplayOn || line.choice || line.card) return;
+  if (isTyping) return;
+  const voice = window.voice?.currentAudio?.();
+  if (voice && !voice.ended && !voice.paused) {
+    voice.addEventListener("ended", () => {
+      if (autoplayOn && activeLines[openingIndex] === line) autoplayTimer = setTimeout(() => nextDialogue.click(), 450);
+    }, { once: true });
+    return;
+  }
+  autoplayTimer = setTimeout(() => {
+    if (autoplayOn && activeLines[openingIndex] === line && !line.choice) nextDialogue.click();
+  }, 1800);
+}
+const autoplayToggle = document.getElementById("autoplay-toggle");
+function paintAutoplayToggle() {
+  if (!autoplayToggle) return;
+  autoplayToggle.textContent = `Autoplay: ${autoplayOn ? "On" : "Off"}`;
+  autoplayToggle.setAttribute("aria-pressed", String(autoplayOn));
+}
+autoplayToggle?.addEventListener("click", () => {
+  autoplayOn = !autoplayOn;
+  try { localStorage.setItem(AUTOPLAY_PREF_KEY, autoplayOn ? "on" : "off"); } catch { /* preference just won't persist */ }
+  clearTimeout(autoplayTimer);
+  paintAutoplayToggle();
+  if (autoplayOn && !isTyping) scheduleAutoplay(activeLines[openingIndex]);
+});
+paintAutoplayToggle();
 function paintDialogueText(element, text, italic) {
   if (!italic || !text.includes(italic)) { element.textContent = text; return; }
   const start = text.indexOf(italic);
@@ -368,6 +424,7 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   if (transitioning) return;
   transitioning = true;
   clearInterval(typingTimer);
+  clearTimeout(autoplayTimer);
   clearTimeout(backdropTimer);
   clearTimeout(introTimer);
   introAdvance = null;
@@ -407,6 +464,7 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
 }
 function startStory() { changeScene(true); }
 nextDialogue.addEventListener("click", () => {
+  clearTimeout(autoplayTimer);
   if (transitioning) return;
   // A choice scene may be open while the invisible dialogue button still exists.
   // Never let a stray click or key press advance past the choice checkpoint.

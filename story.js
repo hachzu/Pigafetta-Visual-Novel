@@ -1082,14 +1082,32 @@ introMusic.loop = true;
 introMusic.preload = "auto";
 introMusic.volume = 0;
 let musicFadeTimer = 0;
+let introMusicVoiceDucked = false;
+let introMusicVoiceFadeTimer = 0;
+let introMusicTargetVolume = .32;
+function setIntroMusicVoiceDucked(ducked) {
+  introMusicVoiceDucked = ducked;
+  clearInterval(introMusicVoiceFadeTimer);
+  const start = introMusic.volume;
+  const target = introMusic.paused && ducked ? 0 : ducked ? introMusicTargetVolume * .12 : introMusicTargetVolume;
+  const steps = 8;
+  let step = 0;
+  introMusicVoiceFadeTimer = setInterval(() => {
+    step++;
+    introMusic.volume = Math.max(0, Math.min(1, start + (target - start) * step / steps));
+    if (step >= steps) clearInterval(introMusicVoiceFadeTimer);
+  }, 25);
+}
+window.setIntroMusicVoiceDucked = setIntroMusicVoiceDucked;
 function fadeMusic(target, duration = 1400) {
   clearInterval(musicFadeTimer);
   const start = introMusic.volume;
+  const adjustedTarget = introMusicVoiceDucked ? target * .12 : target;
   const steps = Math.max(1, Math.round(duration / 40));
   let step = 0;
   musicFadeTimer = setInterval(() => {
     step++;
-    introMusic.volume = Math.max(0, Math.min(1, start + (target - start) * step / steps));
+    introMusic.volume = Math.max(0, Math.min(1, start + (adjustedTarget - start) * step / steps));
     if (step >= steps) {
       clearInterval(musicFadeTimer);
       if (target === 0) introMusic.pause();
@@ -1111,7 +1129,8 @@ async function startIntroduction() {
 function startIntroductionMusic() {
   introMusic.currentTime = 0;
   introMusic.volume = 0;
-  introMusic.play().then(() => fadeMusic(.32, 1800)).catch(() => {
+  introMusicTargetVolume = .32;
+  introMusic.play().then(() => fadeMusic(introMusicTargetVolume, 1800)).catch(() => {
     introStart.textContent = "Click to start · music unavailable";
   });
 }

@@ -256,6 +256,10 @@ body {
 .story-choices button:hover:not(:disabled), .story-choices button:focus-visible { border-color: #f1ecdf; box-shadow: inset 0 0 0 2px #ebe6da42, 0 0 0 1px #d6d0c3, 0 12px 30px #000b; outline: 2px solid #e8dfca; outline-offset: 3px; transform: translateY(-3px); }
 @keyframes choice-focus-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes choice-rise { from { opacity: 0; transform: translateY(22px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.story-choices .host-vote-choice { width: 100%; }
+.vote-footer { display: flex; justify-content: center; align-items: baseline; gap: 18px; color: #ded6c4; font: 16px/1.3 Georgia, serif; text-align: center; font-variant-numeric: tabular-nums; }
+.vote-footer p { margin: 0; }
+.vote-total { color: #f1d982; }
 @media(max-width:600px) { .story-choices button { font-size: 15px; padding: 11px 14px; } }
 .game-menu-toggle { position: fixed; right: 22px; top: 20px; z-index: 40; width: 50px; height: 46px; border: 1px solid #a99a80; border-radius: 6px; background: #101114ed; display: grid; align-content: center; gap: 5px; padding: 11px; cursor: pointer; }
 .game-menu-toggle span { height: 2px; width: 100%; background: #eee5d2; }

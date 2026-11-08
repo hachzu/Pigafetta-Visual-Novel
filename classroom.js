@@ -210,15 +210,21 @@ function drawVote() {
     panel.append(status);
     pendingChoice.choices.forEach((choice, index) => {
       const button = document.createElement("button");
+      button.className = "host-vote-choice";
+      button.style.animationDelay = `${.1 + index * .08}s`;
       button.disabled = hostCanChoose ? false : round.status !== "tie" || !leaders.includes(index);
       button.onclick = () => chooseWinner(index, hostCanChoose);
+      button.textContent = choice.label;
       panel.append(button);
     });
+    const footer = document.createElement("div");
+    footer.className = "vote-footer";
+    footer.innerHTML = '<p class="vote-timer"></p><p class="vote-total"></p>';
+    panel.append(footer);
   }
-  panel.querySelector(".vote-status").textContent = !client.online() ? "Connection lost—reconnecting…" : hostCanChoose ? "No audience connected — host, choose a path" : round.status === "tie" ? `${total} votes · ${total ? "Tie" : "No votes"} — host, select a highlighted choice` : `${left}s remaining · ${total} votes`;
-  [...panel.querySelectorAll("button")].forEach((button, index) => {
-    button.textContent = `${pendingChoice.choices[index].label} (${counts[index]})`;
-  });
+  panel.querySelector(".vote-status").textContent = !client.online() ? "Reconnecting" : hostCanChoose ? "Choose a path" : round.status === "tie" ? "Tie: choose a path" : "Please vote!";
+  panel.querySelector(".vote-timer").textContent = round.status === "open" ? `${left} seconds remaining` : "Voting closed";
+  panel.querySelector(".vote-total").textContent = `Votes: ${total}`;
   if (left === 0 && round.status === "open" && !closing && client.online()) closeVote();
 }
 

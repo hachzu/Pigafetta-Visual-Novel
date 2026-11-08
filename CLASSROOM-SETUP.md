@@ -7,7 +7,7 @@
 5. Students scan the QR code on the host display to join directly. Click **Enlarge QR code** for a projector-sized view. The code contains the audience URL and room code, so no typing is required. The audience link and manual room-code entry remain available. Host the game on a URL students can reach (such as GitHub Pages), rather than localhost.
 6. Start New Game or Continue. When I-02 appears, voting opens automatically. After the countdown, the most-voted branch plays automatically. Ties (including zero votes) wait for the host to click a tied choice.
 
-Each anonymous Firebase account can create one immutable vote for each question. Its identity persists across reloads and tabs in the same browser. Another browser, private browsing session, or cleared browser data creates another identity; enforcing one physical device or one student requires school sign-in or individual admission codes.
+Each anonymous Firebase account has one current vote for each question and may change that choice until the countdown ends. Its identity persists across reloads and tabs in the same browser. Another browser, private browsing session, or cleared browser data creates another identity; enforcing one physical device or one student requires school sign-in or individual admission codes.
 
 Continue saves the current line and chosen branch locally on the host browser. A refreshed host tab also reconnects to its classroom room. Returning to the main menu keeps the classroom room and any active countdown running; Continue rejoins that same vote/result. Create a new classroom room for a fresh class vote. Rooms expire after about 12 hours.
 

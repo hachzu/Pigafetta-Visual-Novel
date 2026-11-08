@@ -11,7 +11,7 @@
           "$round": {
             "votes": {
               "$uid": {
-                ".write": "auth != null && auth.uid === $uid && auth.uid !== root.child('rooms').child($code).child('hostUid').val() && !data.exists() && root.child('rooms').child($code).child('expiresAt').val() > now && root.child('rooms').child($code).child('rounds').child($round).child('status').val() === 'open' && root.child('rooms').child($code).child('rounds').child($round).child('endsAt').val() > now",
+                ".write": "auth != null && auth.uid === $uid && auth.uid !== root.child('rooms').child($code).child('hostUid').val() && root.child('rooms').child($code).child('expiresAt').val() > now && root.child('rooms').child($code).child('rounds').child($round).child('status').val() === 'open' && root.child('rooms').child($code).child('rounds').child($round).child('endsAt').val() > now",
                 ".validate": "newData.isNumber() && (newData.val() === 0 || newData.val() === 1 || newData.val() === 2)"
               }
             }

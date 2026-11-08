@@ -64,7 +64,7 @@ function render() {
   const open = round.status === "open" && client.now() < round.endsAt;
   question.textContent = round.question;
   timer.textContent = open ? `${Math.max(0, Math.ceil((round.endsAt - client.now()) / 1000))}s` : "";
-  status.textContent = !client.online() ? "Reconnecting…" : voted && open ? "Vote recorded." : !open ? "Please watch the projector!" : "";
+  status.textContent = !client.online() ? "Reconnecting" : !open ? "Please watch the projector!" : "";
   if (!choices.children.length) {
     round.options.forEach((label, index) => {
       const button = document.createElement("button");
@@ -82,7 +82,7 @@ function render() {
     });
   }
   [...choices.children].forEach((button, index) => {
-    button.disabled = sending || voted || !open || !client.online();
+    button.disabled = sending || !open || !client.online();
     button.classList.toggle("selected", vote === index);
     button.setAttribute("aria-pressed", String(vote === index));
   });
@@ -93,8 +93,7 @@ async function castVote(index) {
   sending = true;
   render();
   try {
-    const result = await client.runTransaction(client.ref(client.db, `rooms/${code}/rounds/I-02/votes/${client.uid}`), current => current === null ? index : undefined, { applyLocally: false });
-    if (!result.committed) status.textContent = "Your vote has already been recorded.";
+    await client.runTransaction(client.ref(client.db, `rooms/${code}/rounds/I-02/votes/${client.uid}`), () => index, { applyLocally: false });
   } catch (error) { status.textContent = "Vote not accepted. Voting may have closed, or the connection failed. " + error.message; }
   finally { sending = false; render(); }
 }

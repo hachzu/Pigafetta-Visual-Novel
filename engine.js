@@ -91,8 +91,8 @@ const manuelSprite = document.getElementById("manuel-sprite");
 // puts them there; otherwise whoever was there on the previous line stays.
 let leftCast = "";
 // Left-slot characters in the Homonhon, Limasawa and Cebu scenes.
-const castNames = { natives: "Natives", enrique: "Enrique of Malacca", calambu: "Rajah Calambu", humabon: "Rajah Humabon", humamay: "Hara Humamay" };
-const castSheets = { natives: "natives-expressions-square.png", enrique: "enrique-expressions-square.png", calambu: "rajah-calambu-expressions-square.png", humabon: "rajah-humabon-expressions-square.png", humamay: "hara-humamay-expressions-square.png" };
+const castNames = { natives: "Natives", enrique: "Enrique of Malacca", calambu: "Rajah Calambu", humabon: "Rajah Humabon", humamay: "Hara Humamay", lapulapu: "Lapu-Lapu", pigafetta: "Antonio Pigafetta" };
+const castSheets = { natives: "natives-expressions-square.png", enrique: "enrique-expressions-square.png", calambu: "rajah-calambu-expressions-square.png", humabon: "rajah-humabon-expressions-square.png", humamay: "hara-humamay-expressions-square.png", lapulapu: "lapu-lapu-expressions-square.png", pigafetta: "pigafetta-expressions.png" };
 function castOf(speaker) {
   if (!speaker) return "";
   if (speaker.startsWith("Native")) return "natives";
@@ -100,6 +100,8 @@ function castOf(speaker) {
   if (speaker === "Rajah Calambu") return "calambu";
   if (speaker.startsWith("Rajah Humabon")) return "humabon";
   if (speaker.startsWith("Hara Humamay")) return "humamay";
+  if (speaker.startsWith("Lapu-Lapu")) return "lapulapu";
+  if (speaker.startsWith("Antonio Pigafetta")) return "pigafetta";
   return "";
 }
 function homonhonLeftCast() {
@@ -115,7 +117,7 @@ function updateCharacterSprites(speakingLineStarted = false) {
   const magellanEmotion = storyLocation === "portugal" && openingIndex >= 8 ? 2 : 0;
   const manuelEmotion = storyLocation === "preparations" ? (openingIndex >= 4 ? 2 : 0) : storyLocation === "spain" ? (line.pleased ? 2 : 0) : storyLocation === "portugal" && (openingIndex === 3 || openingIndex >= 7) ? 2 : 0;
   const magellanTalking = line.speaker === "Ferdinand Magellan";
-  const castScene = storyLocation === "homonhon" || storyLocation === "limasawa" || storyLocation === "cebu";
+  const castScene = ["homonhon", "limasawa", "cebu", "mactan", "massacre", "brunei", "tidore", "returnvoyage", "homecoming"].includes(storyLocation);
   const cast = castScene ? homonhonLeftCast() : "";
   const companion = storyLocation === "preparations" ? "Rui Faleiro" : storyLocation === "departure" ? "Antonio Pigafetta" : storyLocation === "spain" ? "King Charles I" : castScene ? (castNames[cast] || "Enrique of Malacca") : "King Manuel I";
   const manuelTalking = castScene ? Boolean(cast) && castOf(line.speaker) === cast : line.speaker === companion;
@@ -169,10 +171,12 @@ let currentStoryTrack = "palace";
 let lastStoryMusicCue = "";
 
 function playSceneMusic(scene, restart = false) {
-  const track = scene === "limasawa" || scene === "cebu" ? "limasawa" : scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
+  const track = ["cebu", "mactan", "actthree", "massacre", "brunei", "tidore", "returnvoyage", "homecoming"].includes(scene) ? "cebu" : scene === "limasawa" ? "limasawa" : scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
   clearInterval(palaceMusicFadeTimer);
   if (currentStoryTrack !== track) {
-    palaceMusic.src = track === "limasawa"
+    palaceMusic.src = track === "cebu"
+      ? "music/Kevin%20Penkin%20-%20Rafters.mp3"
+      : track === "limasawa"
       ? "music/Kevin%20Penkin%20-%20Days%20in%20the%20Sun.mp3"
       : track === "philippines"
       ? "music/Kevin%20Penkin%20-%20Atla%20%26%20Fohl.mp3"
@@ -315,8 +319,9 @@ function setCebuBackdrop(backdrop = "port") {
 
 function renderOpening() {
   clearInterval(typingTimer);
+  window.voice?.stop();
   saveProgress();
-  if (storyLocation === "philippines") { renderVoyagePassage(); return; }
+  if (storyLocation === "philippines" || storyLocation === "actthree") { renderVoyagePassage(); return; }
   const line = activeLines[openingIndex];
   if (line.choice) { showSpainChoices(); return; }
   if (line.card) { showTransitionCard(line); return; }
@@ -324,9 +329,11 @@ function renderOpening() {
   if (storyLocation === "homonhon") setHomonhonBackdrop(line.homonhonBackdrop || "island");
   if (storyLocation === "limasawa") setLimasawaBackdrop(Boolean(line.cg));
   if (storyLocation === "cebu") setCebuBackdrop(line.cebuBackdrop || "port");
+  storyScreen.classList.toggle("is-stage-clear", Boolean(line.clearStage));
   if (line.musicCue) setTimeout(() => playStoryMusicCue(line.musicCue), 0);
   const text = line.text;
   window.classroom?.syncDialogue?.({ speaker: line.speaker || "", text, direction: Boolean(line.direction) });
+  window.voice?.play(line, activeLines[openingIndex + 1]);
   const textElement = document.getElementById("dialogue-text");
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   skipTypewriter = reduceMotion;
@@ -376,11 +383,11 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   menuMessage.textContent = "";
   storyScreen.hidden = !showStory;
   if (!showStory) {
-    document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean", "is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat", "is-limasawa", "is-limasawa-cg", "is-departs-cebu", "is-cebu", "is-cebu-square");
+    document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean", "is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat", "is-limasawa", "is-limasawa-cg", "is-departs-cebu", "is-cebu", "is-cebu-square", "is-mactan", "is-brunei", "is-tidore", "is-end");
     homonhonBackdrop = "";
     limasawaCg = false;
     cebuBackdrop = "";
-    storyScreen.classList.remove("is-cg");
+    storyScreen.classList.remove("is-cg", "is-stage-clear");
   }
   if (showStory) storyScreen.classList.toggle("is-waiting", dialogueDelay > 0);
   transitionLayer.classList.remove("is-dark");
@@ -413,6 +420,7 @@ nextDialogue.addEventListener("click", () => {
     dialoguePanel.classList.add("is-ready");
     return;
   }
+  window.voice?.stop();
   if (openingIndex < activeLines.length - 1) { openingIndex++; renderOpening(); }
   else if (storyLocation === "portugal") { startSpainScene(); }
   else if (storyLocation === "spain") { startSevilleScene(); }
@@ -420,6 +428,13 @@ nextDialogue.addEventListener("click", () => {
   else if (storyLocation === "departure") { startOceanScene(); }
   else if (storyLocation === "homonhon") { startLimasawaScene(); }
   else if (storyLocation === "limasawa") { startCebuTransition(); }
+  else if (storyLocation === "cebu") { startMactanScene(); }
+  else if (storyLocation === "mactan") { startActThreeIntro(); }
+  else if (storyLocation === "massacre") { startCebuExitCard(); }
+  else if (storyLocation === "brunei") { showCaptionCard("The ships continue toward the Moluccas.", "is-ocean", startTidoreScene); }
+  else if (storyLocation === "tidore") { showCaptionCard("The two remaining ships are separated.", "is-ocean", startReturnVoyageScene); }
+  else if (storyLocation === "returnvoyage") { showCaptionCard("The Spanish coastline appears on the horizon.", "is-ocean", startHomecomingScene); }
+  else if (storyLocation === "homecoming") { startTheEnd(); }
   else { fadePalaceMusic(0, 1800); changeScene(false); }
 });
 document.addEventListener("keydown", event => {
@@ -472,22 +487,26 @@ async function continueSavedGame(checkpoint = null) {
   storyScreen.classList.remove("is-choosing");
   activeLines = save.lines;
   openingIndex = save.index;
-  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines", "homonhon", "limasawa", "cebu"].includes(save.location) ? save.location : "portugal";
+  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines", "homonhon", "limasawa", "cebu", "mactan", "actthree", "massacre", "brunei", "tidore", "returnvoyage", "homecoming"].includes(save.location) ? save.location : "portugal";
   const main = document.getElementById("main-menu");
   main.classList.remove("is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
   homonhonBackdrop = "";
   limasawaCg = false;
   cebuBackdrop = "";
   main.classList.remove("is-limasawa-cg", "is-cebu-square");
-  storyScreen.classList.remove("is-cg");
+  storyScreen.classList.remove("is-cg", "is-stage-clear");
   lastStoryMusicCue = "";
   main.classList.add("is-palace");
   main.classList.toggle("is-homonhon", storyLocation === "homonhon");
   main.classList.toggle("is-limasawa", storyLocation === "limasawa");
-  main.classList.toggle("is-cebu", storyLocation === "cebu");
+  main.classList.toggle("is-cebu", storyLocation === "cebu" || storyLocation === "massacre");
+  main.classList.toggle("is-cebu-square", storyLocation === "massacre");
+  main.classList.toggle("is-mactan", storyLocation === "mactan");
+  main.classList.toggle("is-brunei", storyLocation === "brunei");
+  main.classList.toggle("is-tidore", storyLocation === "tidore");
   main.classList.remove("is-departs-cebu");
-  main.classList.toggle("is-docks", storyLocation === "preparations" || storyLocation === "departure");
-  main.classList.toggle("is-ocean", storyLocation === "ocean" || storyLocation === "philippines");
+  main.classList.toggle("is-docks", storyLocation === "preparations" || storyLocation === "departure" || storyLocation === "homecoming");
+  main.classList.toggle("is-ocean", storyLocation === "ocean" || storyLocation === "philippines" || storyLocation === "actthree" || storyLocation === "returnvoyage");
   main.classList.toggle("is-entrance", storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1));
   manuelSprite.style.backgroundImage = storyLocation === "spain" ? 'url("assets/charles-expressions.png")' : 'url("assets/manuel-expressions.png")';
   if (storyLocation === "preparations") manuelSprite.style.backgroundImage = 'url("assets/rui-expressions.png")';
@@ -499,7 +518,7 @@ async function continueSavedGame(checkpoint = null) {
   menuMessage.hidden = true;
   introScreen.hidden = true;
   storyScreen.hidden = false;
-  storyScreen.classList.toggle("is-waiting", storyLocation === "philippines");
+  storyScreen.classList.toggle("is-waiting", storyLocation === "philippines" || storyLocation === "actthree");
   renderOpening();
   if (storyLocation !== "ocean") playSceneMusic(storyLocation);
   transitionLayer.classList.remove("is-dark");
@@ -511,6 +530,7 @@ document.getElementById("return-menu").addEventListener("click", async () => {
   if (transitioning) return;
   if (!storyScreen.hidden) saveProgress();
   toggleGameMenu(false);
+  window.voice?.stop();
   clearTimeout(introTimer);
   introAdvance = null;
   fadeMusic(0, 500);
@@ -530,7 +550,7 @@ document.getElementById("chapters-close").addEventListener("click", () => {
 });
 document.getElementById("chapters-menu").addEventListener("click", event => {
   const chapter = event.target.closest("[data-chapter]")?.dataset.chapter;
-  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines, homonhon: homonhonOpening, limasawa: limasawaOpening, cebu: cebuOpening };
+  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines, homonhon: homonhonOpening, limasawa: limasawaOpening, cebu: cebuOpening, mactan: mactanLines, actthree: actThreeNarration, massacre: massacreLines, brunei: bruneiLines, tidore: tidoreLines, returnvoyage: returnVoyageLines, homecoming: homecomingLines };
   if (!chapters[chapter] || transitioning) return;
   document.getElementById("chapters-menu").close();
   continueSavedGame({ location: chapter, lines: chapters[chapter], index: 0 });

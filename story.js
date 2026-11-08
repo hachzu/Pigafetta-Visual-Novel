@@ -329,7 +329,7 @@ function renderVoyagePassage() {
         chapterTitle.style.transitionDuration = "";
         introAdvance = null;
         window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
-        startHomonhonScene();
+        storyLocation === "actthree" ? startMassacreScene() : startHomonhonScene();
       }
     }, fade);
   };
@@ -337,7 +337,7 @@ function renderVoyagePassage() {
   introTimer = setTimeout(advance, fade + 3000);
 }
 chapterTitle.addEventListener("click", () => {
-  if (storyLocation === "philippines" && !transitioning) introAdvance?.();
+  if ((storyLocation === "philippines" || storyLocation === "actthree") && !transitioning) introAdvance?.();
 });
 
 // ===== Homonhon Island =====
@@ -613,6 +613,7 @@ async function startCebuScene() {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fade = reduced ? 0 : 1500;
   transitionLayer.style.transitionDuration = `${fade}ms`;
+  fadePalaceMusic(0, Math.max(fade, 1));
   transitionLayer.classList.add("is-dark");
   await wait(fade);
   storyScreen.classList.add("is-waiting");
@@ -625,6 +626,7 @@ async function startCebuScene() {
   cebuBackdrop = "port";
   leftCast = "";
   storyLocation = "cebu";
+  playSceneMusic("cebu", true);
   activeLines = cebuOpening;
   openingIndex = 0;
   magellanFrame = -1;
@@ -698,6 +700,368 @@ async function showTransitionCard(line) {
   nextDialogue.focus({ preventScroll: true });
 }
 for (const source of ["cebu-port.png", "cebu-town-square.png", "rajah-humabon-expressions-square.png", "hara-humamay-expressions-square.png"]) {
+  const preload = new Image();
+  preload.src = `assets/${source}`;
+}
+
+// ===== Mactan (Scene II-04) =====
+
+const pigafettaNarration = text => ({ speaker: "Antonio Pigafetta (Narration)", text });
+const lapuLapuLine = text => ({ speaker: "Lapu-Lapu", text });
+const mactanLines = [
+  pigafettaNarration("After establishing relations with Rajah Humabon, our Captain-General sought to extend his influence over the neighboring islands. However, one chieftain, Lapu-Lapu of Mactan, refused to recognize the authority of the Spanish Crown."),
+  pigafettaNarration("Despite the warnings of his companions, Magellan resolved to lead an expedition against the island's inhabitants."),
+  stageDirection("The Spanish fleet approaches Mactan."),
+  stageDirection("Magellan and his men prepare to disembark. However, the shallow waters prevent the ships from approaching close enough to provide effective artillery support."),
+  lapuLapuLine("Umalis na kayo sa aming lupain!"),
+  stageDirection("The warriors of Mactan prepare to defend their territory."),
+  magellanLine("Men! Advance!"),
+  stageDirection("The battle begins."),
+  stageDirection("The Mactan warriors attack the Spanish soldiers. The difficult terrain prevents the Spanish forces from advancing effectively."),
+  pigafettaNarration("Our weapons and armor, which had previously inspired fear among the inhabitants we encountered, proved insufficient against the warriors of Mactan. The shallow waters prevented our ships from providing effective support, and our men struggled to advance through the unfamiliar terrain."),
+  stageDirection("Magellan is wounded during the battle."),
+  stageDirection("His men begin retreating toward the boats."),
+  magellanLine("Retreat! Protect the others!"),
+  // From the fall onward the sprites step out so no one is left standing on screen.
+  { ...stageDirection("Magellan falls beneath the attacks of the Mactan warriors."), clearStage: true },
+  { ...pigafettaNarration("Our Captain-General had fallen. The man who had led us across the vast Pacific Ocean had met his end upon the shores of Mactan."), clearStage: true },
+  { ...stageDirection("The surviving Spanish soldiers retreat toward their boats."), clearStage: true }
+];
+
+async function startMactanScene() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1500;
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-cebu", "is-cebu-square");
+  main.classList.add("is-mactan");
+  storyScreen.classList.remove("is-cg", "is-stage-clear");
+  cebuBackdrop = "";
+  leftCast = "";
+  storyLocation = "mactan";
+  activeLines = mactanLines;
+  openingIndex = 0;
+  magellanFrame = -1;
+  manuelFrame = -1;
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  chapterTitle.textContent = "Mactan, Philippines";
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(1000);
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  transitioning = false;
+  nextDialogue.focus({ preventScroll: true });
+}
+
+// ===== Act III: After Magellan's Death =====
+
+const actThreeNarration = [
+  "With Ferdinand Magellan dead, the surviving members of the expedition must continue their journey without the man who had originally conceived and led it.",
+  "The remaining crew faces further difficulties, including the loss of trusted companions, dwindling manpower, and the growing uncertainty of their mission.",
+  "Despite these hardships, the expedition continues toward the Spice Islands, where its original objective may finally be fulfilled."
+].map(text => ({ speaker: "", text, italic: "" }));
+
+// Same text-only presentation as the Philippine Arc (renderVoyagePassage), over the ocean backdrop.
+async function startActThreeIntro() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const fade = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 3000;
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  storyScreen.classList.remove("is-stage-clear");
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-mactan");
+  main.classList.add("is-ocean");
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.textContent = "ACT III \u2014 AFTER MAGELLAN'S DEATH";
+  chapterTitle.hidden = false;
+  transitionLayer.classList.remove("is-dark");
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(fade + 3000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(1000);
+  transitionLayer.style.transitionDuration = "";
+  storyLocation = "actthree";
+  activeLines = actThreeNarration;
+  openingIndex = 0;
+  transitioning = false;
+  renderOpening();
+}
+
+// ===== Scene III-01: The Massacre at Cebu =====
+
+const massacreLines = [
+  pigafettaNarration("After the death of our Captain-General, we attempted to preserve the friendship we had established with the ruler of Cebu. Rajah Humabon invited several of our men to a banquet, promising gifts and continued cooperation."),
+  stageDirection("The Spanish officers gather for the banquet."),
+  pigafettaNarration("What appeared to be an ordinary gathering would soon become another tragedy for our expedition."),
+  stageDirection("The banquet turns into an ambush."),
+  stageDirection("Several Spanish officers are attacked and killed."),
+  pigafettaNarration("The banquet had been a trap. Many of our companions perished, including Duarte Barbosa, who had assumed command following Magellan's death."),
+  stageDirection("The surviving crew withdraws toward the ships."),
+  pigafettaNarration("With our numbers diminished and our trust in the inhabitants shattered, we could no longer remain in Cebu. We were forced to abandon the island and continue our journey.")
+];
+
+async function startMassacreScene() {
+  if (transitioning) return;
+  transitioning = true;
+  clearTimeout(introTimer);
+  introAdvance = null;
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1500;
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  chapterTitle.hidden = true;
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-ocean", "is-mactan");
+  main.classList.add("is-cebu", "is-cebu-square");
+  storyScreen.classList.remove("is-cg", "is-stage-clear");
+  cebuBackdrop = "square";
+  leftCast = "";
+  storyLocation = "massacre";
+  activeLines = massacreLines;
+  openingIndex = 0;
+  magellanFrame = -1;
+  manuelFrame = -1;
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  chapterTitle.textContent = "Cebu, Philippines";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(1000);
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  transitioning = false;
+  nextDialogue.focus({ preventScroll: true });
+}
+
+// ===== Shared helpers for the narrated closing scenes (III-02 to III-05) =====
+
+const storyBackdropClasses = ["is-cebu", "is-cebu-square", "is-mactan", "is-brunei", "is-tidore", "is-ocean", "is-docks", "is-end"];
+function setStoryBackdrop(backdrop) {
+  const main = document.getElementById("main-menu");
+  main.classList.remove(...storyBackdropClasses);
+  main.classList.add(backdrop);
+}
+
+// Fade out, swap the backdrop under black, show a centered caption, then run next().
+async function showCaptionCard(caption, backdrop, next) {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const fade = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 2000;
+  window.classroom?.syncDialogue?.({ speaker: "", text: caption, direction: false });
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  storyScreen.classList.remove("is-cg", "is-stage-clear");
+  setStoryBackdrop(backdrop);
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.textContent = caption;
+  chapterTitle.hidden = false;
+  transitionLayer.classList.remove("is-dark");
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(fade + 3000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(1000);
+  chapterTitle.hidden = true;
+  transitionLayer.style.transitionDuration = "";
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  transitioning = false;
+  next();
+}
+
+// Start a narration-only scene (no sprites): fade, new backdrop, location title, then the lines.
+async function startNarratedScene(location, lines, backdrop, title) {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1500;
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  storyScreen.classList.remove("is-cg", "is-stage-clear");
+  setStoryBackdrop(backdrop);
+  leftCast = "";
+  storyLocation = location;
+  activeLines = lines;
+  openingIndex = 0;
+  magellanFrame = -1;
+  manuelFrame = -1;
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  chapterTitle.textContent = title;
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(1000);
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  transitioning = false;
+  nextDialogue.focus({ preventScroll: true });
+}
+
+// Transition card: the surviving fleet leaves Cebu, then Brunei begins.
+function startCebuExitCard() {
+  return showCaptionCard("The surviving fleet departs Cebu.", "is-ocean", startBruneiScene);
+}
+
+// ===== Scene III-02: Brunei =====
+
+const bruneiLines = [
+  stageDirection("The remaining expedition approaches Borneo."),
+  pigafettaNarration("After leaving Cebu, we continued westward toward Borneo. There, we encountered the Sultanate of Brunei, a prosperous kingdom with an established trading network and considerable wealth."),
+  stageDirection("The ships arrive near the settlement."),
+  stageDirection("The crew observes the trading activity and wealth of the kingdom."),
+  pigafettaNarration("The kingdom possessed an abundance of valuable goods and maintained relations with merchants from various parts of Asia. Our encounter provided further evidence of the immense wealth that could be found throughout the East Indies."),
+  stageDirection("The expedition establishes contact with the local authorities."),
+  stageDirection("The crew exchanges gifts and prepares to continue its journey.")
+];
+function startBruneiScene() {
+  return startNarratedScene("brunei", bruneiLines, "is-brunei", "Brunei, Borneo");
+}
+
+// ===== Scene III-03: The Spice Islands =====
+
+const tidoreLines = [
+  stageDirection("The expedition approaches Tidore."),
+  pigafettaNarration("At long last, we reached the Spice Islands. The very destination that had inspired our expedition was finally within our grasp."),
+  stageDirection("The surviving ships anchor near the island."),
+  stageDirection("The expedition establishes relations with Sultan Al-Mansur of Tidore."),
+  pigafettaNarration("We were received by the Sultan of Tidore. Here, we found the precious cloves that had motivated our journey across the world's oceans."),
+  stageDirection("The crew begins loading cloves aboard the ships."),
+  stageDirection("The Trinidad is found to require repairs and cannot immediately depart."),
+  stageDirection("The Victoria prepares to return to Spain.")
+];
+function startTidoreScene() {
+  return startNarratedScene("tidore", tidoreLines, "is-tidore", "Tidore, Moluccas");
+}
+
+// ===== Scene III-04: The Return Voyage =====
+
+const returnVoyageLines = [
+  stageDirection("The Trinidad remains behind for repairs while the Victoria prepares to sail."),
+  { ...pigafettaNarration("Our expedition had reached its destination, but the journey was far from over. The Victoria, commanded by Juan Sebasti\u00e1n Elcano, would undertake the perilous return voyage across the Indian Ocean and around the Cape of Good Hope."), italic: "Victoria" },
+  stageDirection("The Victoria departs Tidore, carrying its cargo of cloves."),
+  stageDirection("The ship continues across the Indian Ocean."),
+  pigafettaNarration("The voyage was marked by hunger, exhaustion, and the constant threat of Portuguese interception. Nevertheless, our remaining crew pressed onward."),
+  stageDirection("The Victoria rounds the Cape of Good Hope."),
+  stageDirection("The ship continues across the Atlantic Ocean toward Spain.")
+];
+function startReturnVoyageScene() {
+  return startNarratedScene("returnvoyage", returnVoyageLines, "is-ocean", "THE RETURN VOYAGE");
+}
+
+// ===== Scene III-05: Completion of the Expedition =====
+
+const homecomingLines = [
+  stageDirection("The Victoria approaches the coastline."),
+  stageDirection("After nearly three years at sea, the surviving crew finally returns to Spain."),
+  { ...pigafettaNarration("On September 6, 1522, the Victoria returned to Spain. Of the five ships and approximately 270 men who departed with us, only one ship and eighteen men completed the circumnavigation."), italic: "Victoria" },
+  stageDirection("The surviving crew disembarks."),
+  pigafettaNarration("Ferdinand Magellan did not live to witness the completion of the expedition he had envisioned. Nevertheless, his undertaking had demonstrated that the Earth could be circumnavigated by sea."),
+  stageDirection("The view shifts toward the Victoria, its sails lowered and its hull weathered by years of travel."),
+  pigafettaNarration("We departed in search of spices, wealth, and a western passage to the East Indies. We returned with something far greater: proof of a journey that would forever change humanity's understanding of the world.")
+];
+function startHomecomingScene() {
+  return startNarratedScene("homecoming", homecomingLines, "is-docks", "Sanl\u00facar de Barrameda, Spain");
+}
+
+// The screen fades to black, "THE END" appears, then the game returns to the main menu.
+async function startTheEnd() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 4000;
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  fadePalaceMusic(0, fade + 2000);
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  setStoryBackdrop("is-end");
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.textContent = "THE END";
+  chapterTitle.hidden = false;
+  transitionLayer.style.transitionDuration = reduced ? "0ms" : "1000ms";
+  transitionLayer.classList.remove("is-dark");
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(reduced ? 3000 : 5000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(1000);
+  chapterTitle.hidden = true;
+  transitionLayer.style.transitionDuration = "";
+  transitioning = false;
+  changeScene(false);
+}
+for (const source of ["mactan-shore.png", "lapu-lapu-expressions-square.png", "brunei.png", "tidore.png"]) {
   const preload = new Image();
   preload.src = `assets/${source}`;
 }

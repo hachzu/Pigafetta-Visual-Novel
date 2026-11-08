@@ -11,9 +11,10 @@
   <link rel="preload" as="image" href="assets/royal-chambers-entrance.png">
   <link rel="preload" as="image" href="assets/throneroom.png">
   <link rel="stylesheet" href="style.css">
-  <!-- Order matters: engine.js (shared state) -> story.js (scenes) -> qrcode.js -> classroom.js (module) -->
+  <!-- Order matters: engine.js (shared state) -> story.js (scenes) -> voice.js -> qrcode.js -> classroom.js (module) -->
   <script src="engine.js" defer></script>
   <script src="story.js" defer></script>
+  <script src="voice.js" defer></script>
   <script src="qrcode.js" defer></script>
   <script type="module" src="classroom.js"></script>
 </head>
@@ -22,6 +23,7 @@
   <nav id="game-menu-panel" class="game-menu-panel" aria-label="Game menu" hidden>
     <button id="resume-game">Resume</button>
     <button id="return-menu">Back to main menu</button>
+    <button id="voice-toggle" aria-pressed="true">Voice acting: On</button>
     <button id="classroom-host">Host classroom voting</button>
     <button id="classroom-join">Join as audience</button>
     <button id="classroom-stop" hidden>Stop hosting</button>
@@ -74,6 +76,13 @@
     <button type="button" data-chapter="homonhon">Homonhon Island</button>
     <button type="button" data-chapter="limasawa">Limasawa Island</button>
     <button type="button" data-chapter="cebu">Cebu, Philippines</button>
+    <button type="button" data-chapter="mactan">Mactan, Philippines</button>
+    <button type="button" data-chapter="actthree">Act III: After Magellan's Death</button>
+    <button type="button" data-chapter="massacre">The Massacre at Cebu</button>
+    <button type="button" data-chapter="brunei">Brunei, Borneo</button>
+    <button type="button" data-chapter="tidore">Tidore, Moluccas</button>
+    <button type="button" data-chapter="returnvoyage">The Return Voyage</button>
+    <button type="button" data-chapter="homecoming">Sanlúcar de Barrameda, Spain</button>
     <button type="button" id="chapters-close">Back</button>
   </dialog>
 </body>

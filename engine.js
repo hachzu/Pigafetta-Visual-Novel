@@ -74,6 +74,7 @@ let visibleCharacters = 0;
 let skipTypewriter = false;
 let backdropTimer = 0;
 let homonhonBackdrop = "island";
+let limasawaCg = false;
 let magellanFrame = -1;
 let manuelFrame = -1;
 const storyScreen = document.getElementById("story-screen");
@@ -94,6 +95,7 @@ function homonhonLeftCast() {
     if (entry.with) cast = entry.with === "none" ? "" : entry.with;
     else if (entry.speaker?.startsWith("Native")) cast = "natives";
     else if (entry.speaker === "Enrique of Malacca") cast = "enrique";
+    else if (entry.speaker === "Rajah Calambu") cast = "calambu";
   }
   return cast;
 }
@@ -102,19 +104,20 @@ function updateCharacterSprites(speakingLineStarted = false) {
   const magellanEmotion = storyLocation === "portugal" && openingIndex >= 8 ? 2 : 0;
   const manuelEmotion = storyLocation === "preparations" ? (openingIndex >= 4 ? 2 : 0) : storyLocation === "spain" ? (line.pleased ? 2 : 0) : storyLocation === "portugal" && (openingIndex === 3 || openingIndex >= 7) ? 2 : 0;
   const magellanTalking = line.speaker === "Ferdinand Magellan";
-  const cast = storyLocation === "homonhon" ? homonhonLeftCast() : "";
-  const companion = storyLocation === "preparations" ? "Rui Faleiro" : storyLocation === "departure" ? "Antonio Pigafetta" : storyLocation === "spain" ? "King Charles I" : cast === "natives" ? "Natives" : storyLocation === "homonhon" ? "Enrique of Malacca" : "King Manuel I";
+  const castScene = storyLocation === "homonhon" || storyLocation === "limasawa";
+  const cast = castScene ? homonhonLeftCast() : "";
+  const companion = storyLocation === "preparations" ? "Rui Faleiro" : storyLocation === "departure" ? "Antonio Pigafetta" : storyLocation === "spain" ? "King Charles I" : cast === "natives" ? "Natives" : cast === "calambu" ? "Rajah Calambu" : castScene ? "Enrique of Malacca" : "King Manuel I";
   const manuelTalking = cast === "natives" ? line.speaker.startsWith("Native") : line.speaker === companion;
   manuelSprite.hidden = storyLocation === "ocean" || (storyLocation === "departure" && openingIndex >= 5) || storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1);
   magellanSprite.hidden = storyLocation === "ocean";
-  if (storyLocation === "homonhon") {
+  if (castScene) {
     // Magellan makes his entrance with his first line, then stays in the scene.
     // The left slot holds Enrique or the natives, whichever homonhonLeftCast() says is on stage.
     magellanSprite.hidden = !activeLines.slice(0, openingIndex + 1).some(entry => entry.speaker === "Ferdinand Magellan");
     manuelSprite.hidden = !cast;
     if (cast && cast !== leftCast) {
       // Swap sheets only when the cast changes, starting on the attentive frame.
-      manuelSprite.style.backgroundImage = `url("assets/${cast === "natives" ? "natives-expressions-square.png" : "enrique-expressions-square.png"}")`;
+      manuelSprite.style.backgroundImage = `url("assets/${cast === "natives" ? "natives-expressions-square.png" : cast === "calambu" ? "rajah-calambu-expressions-square.png" : "enrique-expressions-square.png"}")`;
       manuelSprite.style.backgroundPosition = "0 0";
       manuelFrame = 0;
     }
@@ -155,10 +158,12 @@ let currentStoryTrack = "palace";
 let lastStoryMusicCue = "";
 
 function playSceneMusic(scene, restart = false) {
-  const track = scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
+  const track = scene === "limasawa" ? "limasawa" : scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
   clearInterval(palaceMusicFadeTimer);
   if (currentStoryTrack !== track) {
-    palaceMusic.src = track === "philippines"
+    palaceMusic.src = track === "limasawa"
+      ? "music/Kevin%20Penkin%20-%20Days%20in%20the%20Sun.mp3"
+      : track === "philippines"
       ? "music/Kevin%20Penkin%20-%20Atla%20%26%20Fohl.mp3"
       : track === "seville"
       ? "music/Kana%20Inukai%20-%20Yeon%20Yihwa.mp3"
@@ -269,6 +274,21 @@ function setHomonhonBackdrop(backdrop = "island") {
   }, fadeDuration);
 }
 
+function setLimasawaBackdrop(showCg) {
+  if (limasawaCg === showCg) return;
+  limasawaCg = showCg;
+  const mainMenu = document.getElementById("main-menu");
+  clearTimeout(backdropTimer);
+  const fadeDuration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
+  transitionLayer.classList.add("is-dark");
+  backdropTimer = setTimeout(() => {
+    mainMenu.classList.toggle("is-limasawa-cg", showCg);
+    // The CG is a full picture, so the sprites step out while it shows.
+    storyScreen.classList.toggle("is-cg", showCg);
+    requestAnimationFrame(() => transitionLayer.classList.remove("is-dark"));
+  }, fadeDuration);
+}
+
 function renderOpening() {
   clearInterval(typingTimer);
   saveProgress();
@@ -277,6 +297,7 @@ function renderOpening() {
   if (line.choice) { showSpainChoices(); return; }
   if (storyLocation === "portugal") setPalaceBackdrop(openingIndex < 4 || openingIndex === palaceLines.length - 1);
   if (storyLocation === "homonhon") setHomonhonBackdrop(line.homonhonBackdrop || "island");
+  if (storyLocation === "limasawa") setLimasawaBackdrop(Boolean(line.cg));
   if (line.musicCue) setTimeout(() => playStoryMusicCue(line.musicCue), 0);
   const text = line.text;
   window.classroom?.syncDialogue?.({ speaker: line.speaker || "", text, direction: Boolean(line.direction) });
@@ -329,8 +350,10 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   menuMessage.textContent = "";
   storyScreen.hidden = !showStory;
   if (!showStory) {
-    document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean", "is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
+    document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean", "is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat", "is-limasawa", "is-limasawa-cg", "is-departs-cebu");
     homonhonBackdrop = "";
+    limasawaCg = false;
+    storyScreen.classList.remove("is-cg");
   }
   if (showStory) storyScreen.classList.toggle("is-waiting", dialogueDelay > 0);
   transitionLayer.classList.remove("is-dark");
@@ -368,6 +391,8 @@ nextDialogue.addEventListener("click", () => {
   else if (storyLocation === "spain") { startSevilleScene(); }
   else if (storyLocation === "preparations") { startDepartureScene(); }
   else if (storyLocation === "departure") { startOceanScene(); }
+  else if (storyLocation === "homonhon") { startLimasawaScene(); }
+  else if (storyLocation === "limasawa") { startCebuTransition(); }
   else { fadePalaceMusic(0, 1800); changeScene(false); }
 });
 document.addEventListener("keydown", event => {
@@ -420,13 +445,18 @@ async function continueSavedGame(checkpoint = null) {
   storyScreen.classList.remove("is-choosing");
   activeLines = save.lines;
   openingIndex = save.index;
-  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines", "homonhon"].includes(save.location) ? save.location : "portugal";
+  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines", "homonhon", "limasawa"].includes(save.location) ? save.location : "portugal";
   const main = document.getElementById("main-menu");
   main.classList.remove("is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
   homonhonBackdrop = "";
+  limasawaCg = false;
+  main.classList.remove("is-limasawa-cg");
+  storyScreen.classList.remove("is-cg");
   lastStoryMusicCue = "";
   main.classList.add("is-palace");
   main.classList.toggle("is-homonhon", storyLocation === "homonhon");
+  main.classList.toggle("is-limasawa", storyLocation === "limasawa");
+  main.classList.remove("is-departs-cebu");
   main.classList.toggle("is-docks", storyLocation === "preparations" || storyLocation === "departure");
   main.classList.toggle("is-ocean", storyLocation === "ocean" || storyLocation === "philippines");
   main.classList.toggle("is-entrance", storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1));
@@ -471,7 +501,7 @@ document.getElementById("chapters-close").addEventListener("click", () => {
 });
 document.getElementById("chapters-menu").addEventListener("click", event => {
   const chapter = event.target.closest("[data-chapter]")?.dataset.chapter;
-  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines, homonhon: homonhonOpening };
+  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines, homonhon: homonhonOpening, limasawa: limasawaOpening };
   if (!chapters[chapter] || transitioning) return;
   document.getElementById("chapters-menu").close();
   continueSavedGame({ location: chapter, lines: chapters[chapter], index: 0 });

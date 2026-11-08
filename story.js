@@ -51,7 +51,9 @@ choicePanel.hidden = true;
 storyScreen.prepend(choicePanel);
 let choiceSelectionOpen = false;
 function currentChoiceSet() {
-  return storyLocation === "homonhon"
+  return storyLocation === "limasawa"
+    ? { id: "II-02", question: "Will you introduce Christianity to the inhabitants?", choices: limasawaChoices, common: limasawaCommon }
+    : storyLocation === "homonhon"
     ? { id: "II-01", question: "How will you respond to the discovery?", choices: homonhonChoices, common: homonhonCommon }
     : { id: "I-02", question: "How will you plead with the King of Spain?", choices: spainChoices, common: spainCommon };
 }
@@ -364,10 +366,10 @@ const homonhonCommon = [
   { ...stageDirection("Two balanghais, or large native vessels, approach the Captain-General's ship. A prominent figure accompanied by several attendants stands aboard one of the vessels."), homonhonBackdrop: "native-boat" },
   { ...magellanLine("Enrique, ask them if they have ever seen European armaments being used before."), homonhonBackdrop: "native-boat", with: "enrique" },
   { speaker: "Enrique of Malacca", text: "Kumusta, Rajah? Nakakita na ba kamo sa mga armas sa mga Europeo nga gigamit?", homonhonBackdrop: "native-boat" },
-  { speaker: "Rajah Calambu", text: "Hindi pa ako nakasaksi sa mga armas na tinutukoy mo.", homonhonBackdrop: "native-boat", with: "none" },
+  { speaker: "Rajah Calambu", text: "Hindi pa ako nakasaksi sa mga armas na tinutukoy mo.", homonhonBackdrop: "native-boat" },
   { ...magellanLine("I see. They have not yet learned what God has blessed us with. We shall host a demonstration for them."), homonhonBackdrop: "native-boat" },
   { ...stageDirection("Magellan gathers several of his men, who dress in full steel armor and perform a demonstration involving their iron swords."), homonhonBackdrop: "native-boat" },
-  { speaker: "Rajah Calambu", text: "Napakagaling! Ang isang tauhan mo ay katumbas ng isang daan ng mandirigma ko!", homonhonBackdrop: "native-boat", with: "none" },
+  { speaker: "Rajah Calambu", text: "Napakagaling! Ang isang tauhan mo ay katumbas ng isang daan ng mandirigma ko!", homonhonBackdrop: "native-boat" },
   { speaker: "Enrique of Malacca", text: "He said that the demonstration was impressive, my lord. He claims that one of your men is equivalent to a hundred of his warriors.", homonhonBackdrop: "native-boat" },
   { ...magellanLine("I am no king. I am simply a humble seafarer seeking to befriend you all through the grace of our loving God."), homonhonBackdrop: "native-boat" },
   { ...stageDirection("The two parties continue exchanging gifts."), homonhonBackdrop: "native-boat" }
@@ -413,6 +415,141 @@ async function startHomonhonScene() {
   nextDialogue.focus({ preventScroll: true });
 }
 for (const source of ["homonhon.png", "interiorship.png", "enrique-expressions-square.png", "natives-expressions-square.png"]) {
+  const preload = new Image();
+  preload.src = `assets/${source}`;
+}
+
+// ===== Limasawa Island =====
+
+const enriqueLine = text => ({ speaker: "Enrique of Malacca", text });
+const calambuLine = text => ({ speaker: "Rajah Calambu", text });
+const limasawaOpening = [
+  stageDirection("Preparations for Easter Mass begin."),
+  { choice: true }
+];
+const limasawaCommon = [
+  { ...stageDirection("The Rajahs arrive to observe the ceremony."), with: "calambu" },
+  magellanLine("We have come early ashore to celebrate Mass."),
+  calambuLine("Ano ba itong Mass na itinutukoy mo?"),
+  enriqueLine("My lord, the Rajah is asking what a Mass is."),
+  magellanLine("A Mass is where we join together to praise Almighty God."),
+  magellanLine("Why not join us in the coming Mass?"),
+  calambuLine("Sang-ayon kami sa inyong paanyaya para sa Mass. Ngunit sino ba itong Bathala na inyong tinutukoy?"),
+  enriqueLine("My lord, the Rajahs are asking who God is."),
+  magellanLine("God Almighty is the reason why we are still alive and here to partake in what this land has to offer."),
+  { ...stageDirection("Father Pedro de Valderrama begins the communion."), with: "none" },
+  stageDirection("The congregation participates in the Eucharistic celebration."),
+  stageDirection("The Mass concludes."),
+  { ...stageDirection("Magellan approaches the Rajahs carrying a cross adorned with a crown and nails."), with: "calambu" },
+  magellanLine("This cross, adorned with a crown, symbolizes our Lord. We pray before it so that He may hear our prayers."),
+  magellanLine("Will you grant me permission to lay this holy cross upon the summit of the mountain? If the cross were to be erected here, my brethren will recognize that I have been here and that this land has received our faith."),
+  calambuLine("Maaari mo itong gawin."),
+  { ...stageDirection("Magellan and his men carry the cross to the summit and plant it upon the mountain."), with: "none", cg: true }
+];
+const limasawaChoices = [
+  { label: "Refrain from introducing Christianity and allow the inhabitants to maintain their existing beliefs.", lines: [
+    magellanLine("We have come to celebrate Easter, but I shall not impose our customs upon those who have not expressed an interest in them."),
+    enriqueLine("Shall I inform the Rajahs that the ceremony is intended for our men alone, my lord?"),
+    magellanLine("Yes. They may observe if they wish, but they are under no obligation to participate.")
+  ] },
+  { label: "Invite the local rulers to participate in the Easter Mass.", lines: [
+    magellanLine("We have come ashore to celebrate the holy feast of Easter. Let us invite the Rajahs to join us in the Mass.")
+  ] },
+  { label: "Explain the significance of Christianity to the local rulers before inviting them to attend.", lines: [
+    magellanLine("Before inviting them, we should explain the significance of this celebration. They must understand what they are being invited to witness."),
+    enriqueLine("I shall explain it to them, my lord.")
+  ] }
+];
+async function startLimasawaScene() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1500;
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  fadePalaceMusic(0, Math.max(fade, 1));
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  // Hide the old dialogue and sprites while the screen is black, then reveal the new shore first.
+  storyScreen.classList.add("is-waiting");
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
+  main.classList.add("is-limasawa");
+  main.classList.remove("is-limasawa-cg");
+  storyScreen.classList.remove("is-cg");
+  limasawaCg = false;
+  playSceneMusic("limasawa", true);
+  homonhonBackdrop = "";
+  leftCast = "";
+  storyLocation = "limasawa";
+  activeLines = limasawaOpening;
+  openingIndex = 0;
+  magellanFrame = -1;
+  manuelFrame = -1;
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  // Location title in the center of the screen, as in Seville.
+  chapterTitle.textContent = "Limasawa, Philippines";
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(1000);
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  transitioning = false;
+  nextDialogue.focus({ preventScroll: true });
+}
+
+// Transition card: the fleet leaves Limasawa for Cebu. Art goes in assets/fleet-departs-cebu.png.
+// Cebu content is not written yet, so afterwards this returns to the main menu like any chapter end.
+async function startCebuTransition() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const fade = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 2000;
+  window.classroom?.syncDialogue?.({ speaker: "", text: "The fleet departs for Cebu.", direction: false });
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-limasawa", "is-limasawa-cg");
+  storyScreen.classList.remove("is-cg");
+  limasawaCg = false;
+  main.classList.add("is-departs-cebu");
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.textContent = "The fleet departs for Cebu.";
+  chapterTitle.hidden = false;
+  transitionLayer.classList.remove("is-dark");
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(fade + 4000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(1000);
+  chapterTitle.hidden = true;
+  transitionLayer.style.transitionDuration = "";
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  transitioning = false;
+  fadePalaceMusic(0, 1800);
+  changeScene(false);
+}
+for (const source of ["limasawashore.png", "CGCROSS.png", "fleet-departs-cebu.png"]) {
   const preload = new Image();
   preload.src = `assets/${source}`;
 }

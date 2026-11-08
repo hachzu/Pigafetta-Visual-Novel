@@ -337,6 +337,8 @@ body {
 #main-menu.is-limasawa.is-limasawa-cg { background: url("assets/CGCROSS.png") center / cover no-repeat #0e1620; }
 .story-screen.is-cg .character-stage { visibility: hidden; }
 #main-menu.is-departs-cebu { background: url("assets/fleet-departs-cebu.png") center / cover no-repeat #05090d; }
+#main-menu.is-cebu { background: url("assets/cebu-port.png") center / cover no-repeat #0e1620; }
+#main-menu.is-cebu.is-cebu-square { background: url("assets/cebu-town-square.png") center / cover no-repeat #0e1620; }
 .chapter-title { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; pointer-events: none; color: #fff3db; text-shadow: 0 3px 14px #000, 0 1px 4px #000; font: clamp(32px, 5vw, 64px)/1.2 var(--title-font); text-align: center; opacity: 0; transition: opacity 1s ease; }
 .chapter-title.is-visible { opacity: 1; }
 .chapter-title.voyage-copy { padding: 10vh clamp(28px, 12vw, 180px); display: block; align-content: center; font: clamp(20px, 2.2vw, 28px)/1.75 "Redaction 35", Georgia, serif; pointer-events: auto; cursor: pointer; background: #0005; }

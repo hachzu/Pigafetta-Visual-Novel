@@ -51,7 +51,9 @@ choicePanel.hidden = true;
 storyScreen.prepend(choicePanel);
 let choiceSelectionOpen = false;
 function currentChoiceSet() {
-  return storyLocation === "limasawa"
+  return storyLocation === "cebu"
+    ? { id: "II-03", question: "How will you handle the Rajah of Cebu?", choices: cebuChoices, common: cebuCommon }
+    : storyLocation === "limasawa"
     ? { id: "II-02", question: "Will you introduce Christianity to the inhabitants?", choices: limasawaChoices, common: limasawaCommon }
     : storyLocation === "homonhon"
     ? { id: "II-01", question: "How will you respond to the discovery?", choices: homonhonChoices, common: homonhonCommon }
@@ -515,7 +517,7 @@ async function startLimasawaScene() {
 }
 
 // Transition card: the fleet leaves Limasawa for Cebu. Art goes in assets/fleet-departs-cebu.png.
-// Cebu content is not written yet, so afterwards this returns to the main menu like any chapter end.
+// Afterwards the story continues in Cebu.
 async function startCebuTransition() {
   if (transitioning) return;
   transitioning = true;
@@ -546,10 +548,156 @@ async function startCebuTransition() {
   transitionLayer.style.transitionDuration = "";
   window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
   transitioning = false;
-  fadePalaceMusic(0, 1800);
-  changeScene(false);
+  startCebuScene();
 }
 for (const source of ["limasawashore.png", "CGCROSS.png", "fleet-departs-cebu.png"]) {
+  const preload = new Image();
+  preload.src = `assets/${source}`;
+}
+
+// ===== Cebu =====
+
+const humabonLine = text => ({ speaker: "Rajah Humabon", text });
+const humamayLine = text => ({ speaker: "Hara Humamay", text });
+const cebuOpening = [
+  stageDirection("The fleet enters Cebu. The ships fire their bombards to announce their arrival."),
+  { choice: true }
+];
+const cebuNegotiation = [
+  { ...stageDirection("Magellan prepares to negotiate with Rajah Humabon."), with: "humabon" },
+  magellanLine("Enrique, tell their ruler we come in peace, but the Crown of Spain bows to no earthly king."),
+  humabonLine("Isang sasakyan mula sa Siam ang nagbayad ng buwis apat na araw pa lamang ang nakalilipas. Lahat ng nakikipagkalakalan sa Zzubu ay nagbabayad ng buwis. Ngunit ang iyong panginoon ay nagsasalita nang may labis na kapalaluan."),
+  stageDirection("Negotiations continue between the two parties."),
+  magellanLine("Gladly shall we share blood as brothers! But true unity comes from God above, who created heaven and earth. We ask you to embrace our faith, not out of fear of our steel, but from your own free will."),
+  enriqueLine("Ang sabi ng Kapitan, ang kanilang Diyos ang lumikha ng langit at lupa. Nais niyang ibahagi ang kanilang pananampalataya, ngunit hindi sa pamamagitan ng takot o dahas, kundi sa sarili ninyong kagustuhan."),
+  humabonLine("Kung tatanggapin namin ang inyong Diyos at ang inyong Hari, ipagtatanggol ba kami ng inyong mga tauhang nakabihis-bakal laban sa aming mga kalabang tumatangging sumunod?"),
+  magellanLine("Say the word, Don Carlos! With our guns and armor, one of my men is worth a hundred of theirs. I shall force your enemies into submission!")
+];
+// Everything after the town-square transition uses the square backdrop.
+const cebuSquareLines = lines => lines.map(line => ({ ...line, cebuBackdrop: "square" }));
+const cebuCommon = [
+  ...cebuNegotiation,
+  stageDirection("Several days pass."),
+  { card: "The Town Square of Cebu", cebuBackdrop: "square", with: "none" },
+  ...cebuSquareLines([
+    stageDirection("A large wooden cross is erected in the town square. A temporary altar is prepared for the mass baptism ceremony."),
+    { speaker: "Rajah Humabon (now Don Carlos)", text: "Isinusuko ko ang aking mga lumang diyus-diyosang kahoy sa mga apoy. Mula sa araw na ito, tawagin ninyo akong Don Carlos ng Zzubu!" },
+    stageDirection("Over 500 islanders are baptized alongside Rajah Humabon."),
+    { ...stageDirection("Royal trumpets sound as Hara Humamay arrives at the square."), with: "humamay" },
+    humamayLine("Karon, magsugod ang bag-ong panahon para sa among mga tawo. Hinaot nga magdala kini og kalinaw."),
+    stageDirection("Hara Humamay accepts her Christian name, Doña Juana."),
+    stageDirection("Magellan approaches her carrying the statue of the Child Jesus."),
+    magellanLine("Your Highness, take this Holy Child Jesus. Let Him replace your former idols and keep Him as a guardian over you and your people."),
+    { speaker: "Hara Humamay (Doña Juana)", text: "Salamat kaayo, Kapitan. Dawaton nako kini ug ampingan." },
+    stageDirection("Hara Humamay receives the statue.")
+  ])
+];
+const cebuChoices = [
+  { label: "Demonstrate Spanish military superiority, refuse tribute, and promise military assistance against the Rajah's enemies.", lines: [
+    magellanLine("We have no reason to pay tribute to a ruler who has yet to recognize the authority of the Spanish Crown.")
+  ] },
+  { label: "Pay the customary harbor tribute and remain focused on trade.", lines: [
+    magellanLine("We came here for spices and peaceful trade. It would be unwise to provoke unnecessary hostility over a customary harbor tribute.")
+  ] },
+  { label: "Negotiate an alliance with Rajah Humabon while avoiding an immediate military commitment.", lines: [
+    magellanLine("We must establish a favorable relationship with the Rajah. However, we should not promise military assistance without understanding the circumstances of his conflict.")
+  ] }
+];
+
+async function startCebuScene() {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1500;
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  const main = document.getElementById("main-menu");
+  main.classList.remove("is-limasawa", "is-limasawa-cg", "is-departs-cebu", "is-cebu-square");
+  main.classList.add("is-cebu");
+  storyScreen.classList.remove("is-cg");
+  limasawaCg = false;
+  cebuBackdrop = "port";
+  leftCast = "";
+  storyLocation = "cebu";
+  activeLines = cebuOpening;
+  openingIndex = 0;
+  magellanFrame = -1;
+  manuelFrame = -1;
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  // Location title in the center of the screen, then the dialogue.
+  chapterTitle.textContent = "Cebu, Philippines";
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(1000);
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  transitioning = false;
+  nextDialogue.focus({ preventScroll: true });
+}
+
+// A line like { card: "Title", cebuBackdrop: "square" } is a mid-scene transition: fade out, change the
+// backdrop, show the title in the center, then carry on with the next line.
+async function showTransitionCard(line) {
+  if (transitioning) return;
+  transitioning = true;
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const fade = reduced ? 0 : 1000;
+  window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+  transitionLayer.style.transitionDuration = `${fade}ms`;
+  transitionLayer.classList.add("is-dark");
+  await wait(fade);
+  storyScreen.classList.add("is-waiting");
+  if (line.cebuBackdrop) {
+    cebuBackdrop = line.cebuBackdrop;
+    document.getElementById("main-menu").classList.toggle("is-cebu-square", line.cebuBackdrop === "square");
+  }
+  transitionLayer.classList.remove("is-dark");
+  await wait(fade);
+  transitionLayer.style.transitionDuration = "";
+  chapterTitle.textContent = line.card;
+  chapterTitle.classList.remove("voyage-copy", "is-visible");
+  chapterTitle.style.transitionDuration = "";
+  chapterTitle.hidden = false;
+  void chapterTitle.offsetWidth;
+  chapterTitle.classList.add("is-visible");
+  await wait(2000);
+  chapterTitle.classList.remove("is-visible");
+  await wait(reduced ? 0 : 1000);
+  chapterTitle.hidden = true;
+  await wait(600);
+  transitioning = false;
+  openingIndex++;
+  renderOpening();
+  storyScreen.classList.remove("is-waiting");
+  const dialogue = document.querySelector(".dialogue");
+  dialogue.classList.remove("dialogue-enter");
+  void dialogue.offsetWidth;
+  dialogue.classList.add("dialogue-enter");
+  nextDialogue.focus({ preventScroll: true });
+}
+for (const source of ["cebu-port.png", "cebu-town-square.png", "rajah-humabon-expressions-square.png", "hara-humamay-expressions-square.png"]) {
   const preload = new Image();
   preload.src = `assets/${source}`;
 }

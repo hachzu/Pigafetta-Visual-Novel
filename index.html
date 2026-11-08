@@ -11,15 +11,11 @@
   <link rel="preload" as="image" href="assets/royal-chambers-entrance.png">
   <link rel="preload" as="image" href="assets/throneroom.png">
   <link rel="stylesheet" href="style.css">
-  <script src="script.js" defer></script>
-  <script src="spain.js" defer></script>
-  <script src="departure.js" defer></script>
-  <script src="philippines.js" defer></script>
-  <script src="homonhon.js" defer></script>
-  <script src="intro.js" defer></script>
-  <script src="session.js" defer></script>
-  <script type="module" src="classroom.js"></script>
+  <!-- Order matters: engine.js (shared state) -> story.js (scenes) -> qrcode.js -> classroom.js (module) -->
+  <script src="engine.js" defer></script>
+  <script src="story.js" defer></script>
   <script src="qrcode.js" defer></script>
+  <script type="module" src="classroom.js"></script>
 </head>
 <body>
   <button id="game-menu-toggle" class="game-menu-toggle" aria-label="Open game menu" aria-expanded="false" aria-controls="game-menu-panel"><span></span><span></span><span></span></button>

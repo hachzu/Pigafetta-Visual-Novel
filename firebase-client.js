@@ -1,4 +1,15 @@
-import { firebaseConfig } from "./firebase-config.js";
+// Firebase client setup. The config below is public client configuration;
+// no admin or service-account credentials belong in this repository.
+export const firebaseConfig = {
+  apiKey: "AIzaSyDTsTEzTwEgGhweMg-wL09OYx2JHa-Be7Q",
+  authDomain: "pigafettas-journey.firebaseapp.com",
+  projectId: "pigafettas-journey",
+  storageBucket: "pigafettas-journey.firebasestorage.app",
+  messagingSenderId: "516900652439",
+  appId: "1:516900652439:web:8ebfa225f4c5f4e06770d2",
+  databaseURL: "https://pigafettas-journey-default-rtdb.asia-southeast1.firebasedatabase.app"
+};
+
 export async function connectFirebase() {
   const url = firebaseConfig.databaseURL || localStorage.getItem("pigafetta-database-url");
   if (!url) throw new Error("Add the Realtime Database URL first.");

@@ -77,7 +77,7 @@ Script order in `index.html` matters: `engine.js`, then `story.js`, then `qrcode
 - Votes use server-enforced deadlines, one authenticated identity per vote, and host-only round/result updates.
 - Continue saves the current line and chosen branch locally on the host browser. A refreshed host tab reconnects to its room. Returning to the main menu keeps the room and any active countdown running. Rooms expire after about 12 hours.
 - After a resolved choice, the audience page returns to: "Voting will appear here! Please keep an eye on the projector". Audience members see only synced dialogue, the prompt, choices, and the timer/status.
-- The current game has two voting rounds: I-02 (Spain) and II-01 (Homonhon).
+- The current game has four voting rounds: I-02 (Spain), II-01 (Homonhon), II-02 (Limasawa), and II-03 (Cebu).
 - If database behavior changes, update `database.rules.json` alongside the client code and republish the rules in Firebase.
 
 ### Test before presenting

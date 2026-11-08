@@ -24,19 +24,19 @@ const spainCommon = [
   { ...stageDirection("Magellan bows before the King."), pleased: true }
 ];
 const spainChoices = [
-  { label: "Exaggerate the certainty of your proposed western passage.", lines: [
+  { label: "Overstate confidence in the western passage.", lines: [
     magellanLine("Your Majesty, I assure you that a western passage to the Moluccas exists. The route is within our reach, and I am confident that my expedition shall discover it."),
     charlesLine("You speak with considerable certainty, Captain. What makes you so confident in this proposed route?"),
     magellanLine("The possibility of such a passage is sufficient reason to undertake the journey, Your Majesty."),
     stageDirection("The King considers Magellan's confidence.")
   ] },
-  { label: "Logically map out the incentives and potential benefits of the voyage.", lines: [
+  { label: "Explain the voyage's practical benefits.", lines: [
     magellanLine("Your Majesty, I have studied the available geographical information and devised a plan that could secure a western sea route to the Spice Islands."),
     charlesLine("I see. Tell me more about this proposition."),
     magellanLine("Through this route, Spain could gain direct access to the Moluccas and challenge Portugal's dominance over the spice trade."),
     stageDirection("The King listens carefully to the proposal.")
   ] },
-  { label: "Appeal to the King's ambition to challenge Portuguese dominance over the spice trade.", lines: [
+  { label: "Appeal to Spain's ambition against Portugal.", lines: [
     magellanLine("Your Majesty, Portugal has long enjoyed considerable control over the spice trade. Spain, however, need not remain dependent on Portuguese maritime routes."),
     charlesLine("You propose that Spain establish its own route to the East Indies?"),
     magellanLine("Precisely, Your Majesty. Such an undertaking could greatly increase the wealth and influence of the Spanish Crown."),
@@ -46,18 +46,18 @@ const spainChoices = [
 
 const choicePanel = document.createElement("section");
 choicePanel.className = "story-choices";
-choicePanel.setAttribute("aria-label", "How will you plead with the King of Spain?");
+choicePanel.setAttribute("aria-label", "How should Magellan persuade Spain?");
 choicePanel.hidden = true;
 storyScreen.prepend(choicePanel);
 let choiceSelectionOpen = false;
 function currentChoiceSet() {
   return storyLocation === "cebu"
-    ? { id: "II-03", question: "How will you handle the Rajah of Cebu?", choices: cebuChoices, common: cebuCommon }
+    ? { id: "II-03", question: "How should Magellan respond to Cebu's ruler?", choices: cebuChoices, common: cebuCommon }
     : storyLocation === "limasawa"
-    ? { id: "II-02", question: "Will you introduce Christianity to the inhabitants?", choices: limasawaChoices, common: limasawaCommon }
+    ? { id: "II-02", question: "How should Magellan approach Easter Mass?", choices: limasawaChoices, common: limasawaCommon }
     : storyLocation === "homonhon"
-    ? { id: "II-01", question: "How will you respond to the discovery?", choices: homonhonChoices, common: homonhonCommon }
-    : { id: "I-02", question: "How will you plead with the King of Spain?", choices: spainChoices, common: spainCommon };
+    ? { id: "II-01", question: "What should the crew do?", choices: homonhonChoices, common: homonhonCommon }
+    : { id: "I-02", question: "How should Magellan persuade Spain?", choices: spainChoices, common: spainCommon };
 }
 
 function showSpainChoices() {
@@ -377,9 +377,9 @@ const homonhonCommon = [
   { ...stageDirection("The two parties continue exchanging gifts."), homonhonBackdrop: "native-boat" }
 ];
 const homonhonChoices = [
-  { label: "Allow the crew to rest on the island for a while.", lines: [homonhonShipLine(magellanLine("This appears to be an uninhabited island. We shall remain here and rest for the morrow."))] },
-  { label: "Immediately move to a different island in search of better provisions.", lines: [homonhonShipLine(magellanLine("We must find an island with sufficient provisions. Perhaps another location would better serve our needs.")), homonhonShipLine({ speaker: "Enrique of Malacca", text: "My lord, we have already endured a considerable journey. Moving to another island so soon may exhaust our remaining supplies." }), homonhonShipLine(magellanLine("Very well. We shall remain here for the time being."))] },
-  { label: "Send a small scouting party to investigate the island before allowing the crew to disembark.", lines: [homonhonShipLine(magellanLine("Send a small party ashore. I want to know whether this island is suitable for our needs before the entire crew disembarks.")), homonhonShipLine({ speaker: "Enrique of Malacca", text: "As you command, my lord." }), homonhonShipDirection("The scouting party returns after inspecting the immediate surroundings."), homonhonShipLine(magellanLine("Then we shall remain here and allow the men to recover."))] }
+  { label: "Rest on the island with the crew.", lines: [homonhonShipLine(magellanLine("This appears to be an uninhabited island. We shall remain here and rest for the morrow."))] },
+  { label: "Move to another island for supplies.", lines: [homonhonShipLine(magellanLine("We must find an island with sufficient provisions. Perhaps another location would better serve our needs.")), homonhonShipLine({ speaker: "Enrique of Malacca", text: "My lord, we have already endured a considerable journey. Moving to another island so soon may exhaust our remaining supplies." }), homonhonShipLine(magellanLine("Very well. We shall remain here for the time being."))] },
+  { label: "Scout the island before landing the crew.", lines: [homonhonShipLine(magellanLine("Send a small party ashore. I want to know whether this island is suitable for our needs before the entire crew disembarks.")), homonhonShipLine({ speaker: "Enrique of Malacca", text: "As you command, my lord." }), homonhonShipDirection("The scouting party returns after inspecting the immediate surroundings."), homonhonShipLine(magellanLine("Then we shall remain here and allow the men to recover."))] }
 ];
 async function startHomonhonScene() {
   if (transitioning) return;
@@ -449,15 +449,15 @@ const limasawaCommon = [
   { ...stageDirection("Magellan and his men carry the cross to the summit and plant it upon the mountain."), with: "none", cg: true }
 ];
 const limasawaChoices = [
-  { label: "Refrain from introducing Christianity and allow the inhabitants to maintain their existing beliefs.", lines: [
+  { label: "Respect local beliefs without inviting them.", lines: [
     magellanLine("We have come to celebrate Easter, but I shall not impose our customs upon those who have not expressed an interest in them."),
     enriqueLine("Shall I inform the Rajahs that the ceremony is intended for our men alone, my lord?"),
     magellanLine("Yes. They may observe if they wish, but they are under no obligation to participate.")
   ] },
-  { label: "Invite the local rulers to participate in the Easter Mass.", lines: [
+  { label: "Invite the rulers to Easter Mass.", lines: [
     magellanLine("We have come ashore to celebrate the holy feast of Easter. Let us invite the Rajahs to join us in the Mass.")
   ] },
-  { label: "Explain the significance of Christianity to the local rulers before inviting them to attend.", lines: [
+  { label: "Explain the Mass before inviting the rulers.", lines: [
     magellanLine("Before inviting them, we should explain the significance of this celebration. They must understand what they are being invited to witness."),
     enriqueLine("I shall explain it to them, my lord.")
   ] }
@@ -593,13 +593,13 @@ const cebuCommon = [
   ])
 ];
 const cebuChoices = [
-  { label: "Demonstrate Spanish military superiority, refuse tribute, and promise military assistance against the Rajah's enemies.", lines: [
+  { label: "Defy the Rajah and promise military aid.", lines: [
     magellanLine("We have no reason to pay tribute to a ruler who has yet to recognize the authority of the Spanish Crown.")
   ] },
-  { label: "Pay the customary harbor tribute and remain focused on trade.", lines: [
+  { label: "Pay tribute and prioritize trade.", lines: [
     magellanLine("We came here for spices and peaceful trade. It would be unwise to provoke unnecessary hostility over a customary harbor tribute.")
   ] },
-  { label: "Negotiate an alliance with Rajah Humabon while avoiding an immediate military commitment.", lines: [
+  { label: "Build an alliance without promising military aid.", lines: [
     magellanLine("We must establish a favorable relationship with the Rajah. However, we should not promise military assistance without understanding the circumstances of his conflict.")
   ] }
 ];

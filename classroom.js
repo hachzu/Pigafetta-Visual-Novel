@@ -175,17 +175,17 @@ function makeRoomPanelDraggable(handle) {
   });
 }
 
-async function openVote(panel, choices, complete, roundId = "I-02", question = "How will you plead with the King of Spain?") {
+async function openVote(panel, choices, complete, roundId = "I-02", question = "How should Magellan persuade Spain?") {
   clearInterval(tick);
   pendingChoice = { panel, choices, complete, roundId };
   delete panel.dataset.voteState;
   panel.textContent = "Opening audience vote…";
   try {
     const path = client.ref(client.db, `rooms/${roomCode}/rounds/${roundId}`);
-    await client.runTransaction(path, current => current || {
-      question,
-      options: choices.map(choice => choice.label), status: "open", endsAt: client.now() + seconds * 1000
-    });
+    const options = choices.map(choice => choice.label);
+    await client.runTransaction(path, current => current
+      ? { ...current, question, options }
+      : { question, options, status: "open", endsAt: client.now() + seconds * 1000 });
     await client.set(client.ref(client.db, `rooms/${roomCode}/activeRound`), roundId);
     drawVote();
     tick = setInterval(drawVote, 250);

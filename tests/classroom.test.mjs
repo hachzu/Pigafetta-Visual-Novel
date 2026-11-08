@@ -14,19 +14,19 @@ test('tally resolves plurality, ties, zero votes, and invalid votes', () => {
 function game() {
   const nodes = new Map();
   const storage = new Map();
-  const element = () => ({hidden:false, disabled:false, textContent:'', style:{}, dataset:{}, children:[],
-    classList:{add(){},remove(){},toggle(){}}, setAttribute(){}, addEventListener(){}, focus(){},
-    prepend(){}, append(child){this.children.push(child)}, replaceChildren(){this.children=[]},
-    querySelector(){return element()}});
+  const element = () => ({hidden:false, disabled:false, textContent:'', innerHTML:'', value:'', style:{}, dataset:{}, children:[],
+    classList:{add(){},remove(){},toggle(){}}, setAttribute(){}, removeAttribute(){}, addEventListener(){}, focus(){}, click(){},
+    prepend(child){this.children.unshift(child)}, append(child){this.children.push(child)}, replaceChildren(...children){this.children=children},
+    querySelector(){return element()}, querySelectorAll(){return []}, closest(){return null}, showModal(){}, close(){}});
   const get = id => { if(!nodes.has(id)) nodes.set(id,element()); return nodes.get(id); };
   const context = vm.createContext({
-    document:{getElementById:get, querySelector:get,querySelectorAll:()=>[],addEventListener(){}, createElement:element},
-    window:{}, localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
-    Audio:class { play(){return Promise.resolve()} }, Image:class {},
+    document:{getElementById:get, querySelector:get,querySelectorAll:()=>[],addEventListener(){}, createElement:element, body:element(), documentElement:element()},
+    window:{addEventListener(){}, voice:{play(){},stop(){}}}, localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+    Audio:class { constructor(){this.volume=0;this.paused=true;this.currentTime=0;} play(){this.paused=false;return Promise.resolve()} pause(){this.paused=true} addEventListener(){} }, Image:class {},
     matchMedia:()=>({matches:true}), clearInterval(){},clearTimeout(){},setTimeout:callback=>{callback();return 1},setInterval:()=>1,
     requestAnimationFrame:callback=>callback(), console
   });
-  for (const file of ['script.js','spain.js','departure.js','philippines.js','homonhon.js','intro.js','session.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
+  for (const file of ['engine.js','story.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
   return {run:code=>vm.runInContext(code,context), storage};
 }
 
@@ -64,12 +64,92 @@ test('all Homonhon paths join the native encounter and restore the island scene'
     g.run(`storyLocation='homonhon'; activeLines=homonhonOpening; openingIndex=2; choiceSelectionOpen=true; selectSpainChoice(${index});`);
     assert.equal(g.run('currentChoiceSet().id'), 'II-01');
     assert.equal(g.run('activeLines.at(-1).direction'), true);
-    assert.match(g.run('activeLines.at(-1).text'), /Two balanghais/);
+    assert.equal(g.run('activeLines.at(-1).text'), '(The two parties continue exchanging gifts.)');
     assert.equal(g.run('activeLines.at(-1).homonhonBackdrop'), 'native-boat');
     await g.run('continueSavedGame()');
     assert.equal(g.run('storyLocation'), 'homonhon');
     assert.equal(g.run('manuelSprite.hidden'), true);
   }
+});
+
+test('all four choice sets keep three concise, verb-led options in vote order', () => {
+  const g = game();
+  const expected = [
+    ['spain', 'I-02', 'How should Magellan persuade Spain?', [
+      'Overstate confidence in the western passage.', "Explain the voyage's practical benefits.", "Appeal to Spain's ambition against Portugal."
+    ]],
+    ['homonhon', 'II-01', 'What should the crew do?', [
+      'Rest on the island with the crew.', 'Move to another island for supplies.', 'Scout the island before landing the crew.'
+    ]],
+    ['limasawa', 'II-02', 'How should Magellan approach Easter Mass?', [
+      'Respect local beliefs without inviting them.', 'Invite the rulers to Easter Mass.', 'Explain the Mass before inviting the rulers.'
+    ]],
+    ['cebu', 'II-03', "How should Magellan respond to Cebu's ruler?", [
+      'Defy the Rajah and promise military aid.', 'Pay tribute and prioritize trade.', 'Build an alliance without promising military aid.'
+    ]]
+  ];
+  const actionVerbs = new Set(['overstate','explain','appeal','rest','move','scout','respect','invite','defy','pay','build']);
+  for (const [location, id, question, labels] of expected) {
+    g.run(`storyLocation=${JSON.stringify(location)}`);
+    const set = JSON.parse(JSON.stringify(g.run('currentChoiceSet()')));
+    assert.equal(set.id, id);
+    assert.equal(set.question, question);
+    assert.ok(set.question.trim().split(/\s+/).length <= 8);
+    assert.equal(set.choices.length, 3);
+    assert.deepEqual(set.choices.map(choice => choice.label), labels);
+    for (const choice of set.choices) {
+      assert.ok(choice.label.trim().split(/\s+/).length <= 10, choice.label);
+      assert.ok(actionVerbs.has(choice.label.trim().split(/\s+/)[0].toLowerCase()), choice.label);
+    }
+    assert.ok(set.choices.every(choice => Array.isArray(choice.lines)));
+  }
+  const rules = JSON.parse(fs.readFileSync(new URL('../database.rules.json', import.meta.url), 'utf8'));
+  const voteValidation = rules.rules.rooms['$code'].rounds['$round'].votes['$uid']['.validate'];
+  assert.match(voteValidation, /newData\.val\(\) === 0/);
+  assert.match(voteValidation, /newData\.val\(\) === 1/);
+  assert.match(voteValidation, /newData\.val\(\) === 2/);
+});
+
+test('all four choice branches survive save and Continue', async () => {
+  const cases = [
+    ['spain', 'spainOpening', 2, 1],
+    ['homonhon', 'homonhonOpening', 2, 0],
+    ['limasawa', 'limasawaOpening', 1, 2],
+    ['cebu', 'cebuOpening', 1, 1]
+  ];
+  for (const [location, opening, checkpoint, selected] of cases) {
+    const g = game();
+    g.run(`storyLocation=${JSON.stringify(location)}; activeLines=${opening}; openingIndex=${checkpoint}; choiceSelectionOpen=true; selectSpainChoice(${selected});`);
+    const branchLine = g.run('activeLines[0].text');
+    await g.run('continueSavedGame()');
+    assert.equal(g.run('storyLocation'), location);
+    assert.equal(g.run('activeLines[0].text'), branchLine);
+    assert.equal(g.run('openingIndex'), 0);
+  }
+});
+
+test('host, audience, and tie-break choices keep their shared order for every round', () => {
+  const story = fs.readFileSync(new URL('../story.js', import.meta.url), 'utf8');
+  const classroom = fs.readFileSync(new URL('../classroom.js', import.meta.url), 'utf8');
+  const audience = fs.readFileSync(new URL('../audience.js', import.meta.url), 'utf8');
+  assert.match(classroom, /pendingChoice\.choices\.forEach\(\(choice, index\)/);
+  assert.match(classroom, /round\?\.status === "tie" && tally\(round\)\.leaders\.includes\(index\)/);
+  assert.match(audience, /round\.options\.forEach\(\(label, index\)/);
+  assert.match(classroom, /const options = choices\.map\(choice => choice\.label\)/);
+  const css = fs.readFileSync(new URL('../style.css', import.meta.url), 'utf8');
+  assert.match(css, /\.story-choices button[^\n]*"Redaction 35"/);
+  assert.match(css, /\.audience-page \.audience-choice \{[\s\S]*?font: 22px\/1\.4 "Redaction 35"/);
+  assert.match(css, /@media\(max-width:600px\)[^\n]*audience-choice/);
+  const g = game();
+  for (const location of ['spain', 'homonhon', 'limasawa', 'cebu']) {
+    g.run(`storyLocation=${JSON.stringify(location)}`);
+    const set = JSON.parse(JSON.stringify(g.run('currentChoiceSet()')));
+    const tie = tally({ options: set.choices.map(choice => choice.label), votes: { a: 0, b: 1 } });
+    assert.deepEqual(tie.leaders, [0, 1]);
+    assert.equal(tie.counts.length, 3);
+    assert.deepEqual(set.choices.map((_, index) => tie.leaders.includes(index)), [true, true, false]);
+  }
+  assert.match(story, /choicePanel\.setAttribute\("aria-label", "How should Magellan persuade Spain\?"\)/);
 });
 
 test('preparations and departure checkpoints restore their scene and cast', async () => {

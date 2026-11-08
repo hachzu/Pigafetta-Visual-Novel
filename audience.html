@@ -14,6 +14,13 @@
       <input id="room-code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="off" placeholder="123456">
       <button>Join room</button>
     </form>
+    <section id="audience-dialogue" class="dialogue audience-dialogue" aria-live="polite" hidden>
+      <h2 id="audience-speaker" hidden></h2>
+      <div class="dialogue-panel">
+        <div class="dialogue-icons" aria-hidden="true"></div>
+        <p id="audience-dialogue-text"></p>
+      </div>
+    </section>
     <p id="audience-status" role="status" aria-live="polite"></p>
     <h2 id="audience-question"></h2>
     <p id="audience-timer"></p>

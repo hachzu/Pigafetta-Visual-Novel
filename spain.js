@@ -55,6 +55,7 @@ function showSpainChoices() {
   text.classList.remove("is-direction");
   text.textContent = "How will you plead with the King of Spain?";
   choicePanel.dataset.prompt = text.textContent;
+  window.classroom?.syncDialogue?.({ speaker: "", text: text.textContent, direction: false });
   choicePanel.replaceChildren();
   if (window.classroom?.isHost()) {
     choicePanel.hidden = false;

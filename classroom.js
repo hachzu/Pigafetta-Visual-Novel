@@ -2,6 +2,7 @@ import { connectFirebase } from "./firebase-client.js";
 import { tally } from "./vote-core.js";
 
 let client, roomCode, room, stopRoom, tick, pendingChoice, closing = false;
+let storySync = Promise.resolve();
 const banner = document.createElement("aside");
 banner.className = "room-banner";
 banner.hidden = true;
@@ -51,6 +52,12 @@ function attachRoom(code) {
   if (stopRoom) stopRoom();
   roomCode = code;
   stopHostingButton.hidden = false;
+  const currentLine = activeLines?.[openingIndex];
+  if (!storyScreen.hidden && currentLine) {
+    syncDialogue(currentLine.choice
+      ? { speaker: "", text: "How will you plead with the King of Spain?", direction: false }
+      : { speaker: currentLine.speaker || "", text: currentLine.text, direction: Boolean(currentLine.direction) });
+  }
   banner.hidden = false;
   const link = new URL("audience.html", location.href);
   link.searchParams.set("room", code);
@@ -254,7 +261,16 @@ async function chooseWinner(index, hostChoice = false) {
   } catch (error) { banner.textContent = errorText(error); }
 }
 
-window.classroom = { isHost: () => Boolean(roomCode), openVote };
+function syncDialogue(dialogue) {
+  if (!roomCode || !client) return;
+  // Queue updates so a fast host click cannot let an older line overwrite a newer one.
+  storySync = storySync.catch(() => {}).then(() => client.set(
+    client.ref(client.db, `rooms/${roomCode}/story`),
+    { ...dialogue, updatedAt: client.now() }
+  )).catch(error => { banner.textContent = errorText(error); });
+}
+
+window.classroom = { isHost: () => Boolean(roomCode), openVote, syncDialogue };
 const previousRoom = sessionStorage.getItem("pigafetta-host-room");
 if (previousRoom) {
   try {

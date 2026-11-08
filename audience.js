@@ -6,6 +6,10 @@ const status = document.getElementById("audience-status");
 const question = document.getElementById("audience-question");
 const timer = document.getElementById("audience-timer");
 const choices = document.getElementById("audience-choices");
+const audienceDialogue = document.getElementById("audience-dialogue");
+const audienceSpeaker = document.getElementById("audience-speaker");
+const audienceDialogueText = document.getElementById("audience-dialogue-text");
+let lastDialogueTime = 0;
 let client, code, room, unsubscribe, clock, presenceRef, sending = false;
 const fromLink = new URL(location.href).searchParams.get("room");
 if (/^\d{6}$/.test(fromLink || "")) input.value = fromLink;
@@ -46,17 +50,32 @@ window.addEventListener("pagehide", () => {
 
 function render() {
   if (!room || room.expiresAt < client.now()) {
+    audienceDialogue.hidden = true;
     status.textContent = "This room has expired. Ask the host for a new code.";
     choices.replaceChildren();
     form.hidden = false;
     return;
   }
   const round = room.rounds?.["I-02"];
+  renderDialogue(room.story);
   if (!round) {
     status.textContent = "Voting will appear here! Please keep an eye on the projector.";
     question.textContent = "";
     timer.textContent = "";
     choices.replaceChildren();
+    return;
+  }
+  if (Number.isInteger(round.winner)) {
+    question.textContent = "";
+    timer.textContent = "";
+    choices.replaceChildren();
+    // Keep the choice prompt from lingering while the host moves into the branch.
+    if (!room.story?.text || room.story.text === round.question) {
+      audienceDialogue.hidden = true;
+      status.textContent = "Voting will appear here! Please keep an eye on the projector.";
+    } else {
+      status.textContent = "";
+    }
     return;
   }
   const vote = round.votes?.[client.uid];
@@ -68,7 +87,7 @@ function render() {
   if (!choices.children.length) {
     round.options.forEach((label, index) => {
       const button = document.createElement("button");
-      button.className = "dialogue-panel audience-choice dialogue-enter";
+      button.className = "dialogue-panel audience-choice";
       button.style.animationDelay = `${index * 80}ms`;
       const pattern = document.createElement("span");
       pattern.className = "dialogue-icons";
@@ -94,8 +113,26 @@ async function castVote(index) {
   render();
   try {
     await client.runTransaction(client.ref(client.db, `rooms/${code}/rounds/I-02/votes/${client.uid}`), () => index, { applyLocally: false });
-  } catch (error) { status.textContent = "Vote not accepted. Voting may have closed, or the connection failed. " + error.message; }
+  } catch { status.textContent = "Voting is closed or unavailable."; }
   finally { sending = false; render(); }
 }
 
 if (input.value) { form.hidden = true; form.requestSubmit(); }
+
+function renderDialogue(story) {
+  if (!story?.text) {
+    audienceDialogue.hidden = true;
+    return;
+  }
+  audienceDialogue.hidden = false;
+  audienceSpeaker.textContent = story.speaker || "";
+  audienceSpeaker.hidden = !story.speaker;
+  audienceDialogueText.textContent = story.text;
+  audienceDialogueText.classList.toggle("is-direction", Boolean(story.direction));
+  if (story.updatedAt !== lastDialogueTime) {
+    lastDialogueTime = story.updatedAt;
+    audienceDialogue.classList.remove("dialogue-enter");
+    void audienceDialogue.offsetWidth;
+    audienceDialogue.classList.add("dialogue-enter");
+  }
+}

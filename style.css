@@ -289,6 +289,11 @@ body {
 .game-menu-panel button:hover, .classroom-dialog button:hover { filter: brightness(1.18); transform: translateY(-2px); }
 .game-menu-panel button:focus-visible, .classroom-dialog button:focus-visible { outline: 2px solid #eee5d2; outline-offset: 3px; }
 .audience-page { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; max-width: 780px; gap: 12px; }
+.audience-dialogue { margin: 0 0 8px; }
+.audience-dialogue #audience-speaker { position: relative; display: inline-block; left: 18px; margin: 0; padding: 8px 16px; border: 1px solid #fff4dc; background: #e8dfca; color: #171512; font: 600 16px "Redaction 35", Georgia, serif; transform: translateY(8px); z-index: 2; }
+.audience-dialogue #audience-speaker[hidden] { display: none; }
+.audience-dialogue .dialogue-panel { min-height: 0; padding: 28px 24px; }
+.audience-dialogue #audience-dialogue-text { min-height: 0; max-width: none; font-size: 19px; }
 .audience-page #audience-question { margin: 0 0 12px; font: 26px/1.4 Georgia, serif; text-align: center; }
 .audience-page #audience-question:empty, .audience-page #audience-status:empty, .audience-page #audience-timer:empty { display: none; }
 .audience-page #audience-status { text-align: center; font-size: 19px; margin: 0; }
@@ -300,7 +305,7 @@ body {
   background: linear-gradient(to bottom, #050505 0%, #050505 76%, rgba(5,5,5,.78) 100%);
   color: #f2eee5; box-shadow: inset 0 0 0 2px #c5c9ca24, 0 0 0 1px #454a4e, 0 10px 28px #0009;
   font: 20px/1.55 "Redaction 35", Georgia, serif; text-align: left; cursor: pointer;
-  transition: border-color .2s ease, box-shadow .2s ease;
+  animation: choice-rise .42s cubic-bezier(.2,.75,.25,1) both; transition: border-color .2s ease, box-shadow .2s ease;
 }
 .audience-choice-copy { position: relative; z-index: 1; }
 .audience-page .audience-choice:hover:not(:disabled), .audience-page .audience-choice:focus-visible { border-color: #f2eee5; outline: 2px solid #d9d5c8; outline-offset: 3px; }

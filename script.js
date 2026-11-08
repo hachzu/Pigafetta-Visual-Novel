@@ -186,6 +186,7 @@ function renderOpening() {
   if (line.choice) { showSpainChoices(); return; }
   if (storyLocation === "portugal") setPalaceBackdrop(openingIndex < 4 || openingIndex === palaceLines.length - 1);
   const text = line.text;
+  window.classroom?.syncDialogue?.({ speaker: line.speaker || "", text, direction: Boolean(line.direction) });
   const textElement = document.getElementById("dialogue-text");
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
   skipTypewriter = reduceMotion;

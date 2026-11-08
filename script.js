@@ -28,6 +28,9 @@ const actions = {
   "continue": () => {
     continueSavedGame();
   },
+  "chapters": () => {
+    document.getElementById("chapters-menu").showModal();
+  },
   "settings": () => {
     showMessage("Settings: not built yet.");
   },
@@ -82,10 +85,12 @@ const manuelSprite = document.getElementById("manuel-sprite");
 function updateCharacterSprites(speakingLineStarted = false) {
   const line = activeLines[openingIndex];
   const magellanEmotion = storyLocation === "portugal" && openingIndex >= 8 ? 2 : 0;
-  const manuelEmotion = storyLocation === "spain" ? (line.pleased ? 2 : 0) : openingIndex === 3 || openingIndex >= 7 ? 2 : 0;
+  const manuelEmotion = storyLocation === "preparations" ? (openingIndex >= 4 ? 2 : 0) : storyLocation === "spain" ? (line.pleased ? 2 : 0) : storyLocation === "portugal" && (openingIndex === 3 || openingIndex >= 7) ? 2 : 0;
   const magellanTalking = line.speaker === "Ferdinand Magellan";
-  const manuelTalking = line.speaker === (storyLocation === "spain" ? "King Charles I" : "King Manuel I");
-  manuelSprite.hidden = storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1);
+  const companion = storyLocation === "preparations" ? "Rui Faleiro" : storyLocation === "departure" ? "Antonio Pigafetta" : storyLocation === "spain" ? "King Charles I" : "King Manuel I";
+  const manuelTalking = line.speaker === companion;
+  manuelSprite.hidden = storyLocation === "ocean" || (storyLocation === "departure" && openingIndex >= 5) || storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1);
+  magellanSprite.hidden = storyLocation === "ocean";
   // Only entering a talking pose gets the pop animation.
   const nextMagellanFrame = magellanTalking ? 1 : magellanEmotion;
   const nextManuelFrame = manuelTalking ? 1 : manuelEmotion;
@@ -110,13 +115,30 @@ function updateCharacterSprites(speakingLineStarted = false) {
   magellanSprite.classList.toggle("is-listening", manuelTalking);
   manuelSprite.classList.toggle("is-listening", magellanTalking);
   magellanSprite.setAttribute("aria-label", `Ferdinand Magellan, ${magellanTalking ? "talking" : magellanEmotion === 2 ? "disappointed" : "attentive"}`);
-  manuelSprite.setAttribute("aria-label", `${storyLocation === "spain" ? "King Charles I" : "King Manuel I"}, ${manuelTalking ? "talking" : manuelEmotion === 2 ? "expressive" : "neutral"}`);
+  manuelSprite.setAttribute("aria-label", `${companion}, ${manuelTalking ? "talking" : manuelEmotion === 2 ? "expressive" : "neutral"}`);
 }
 const palaceMusic = new Audio("music/Kevin%20Penkin%20-%20Caf%C3%A8%20Music%20d%E2%80%99Orth.mp3");
 palaceMusic.loop = true;
 palaceMusic.preload = "auto";
 palaceMusic.volume = 0;
 let palaceMusicFadeTimer = 0;
+let currentStoryTrack = "palace";
+
+function playSceneMusic(scene, restart = false) {
+  const track = scene === "philippines" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
+  clearInterval(palaceMusicFadeTimer);
+  if (currentStoryTrack !== track) {
+    palaceMusic.src = track === "philippines"
+      ? "music/Kevin%20Penkin%20-%20Atla%20%26%20Fohl.mp3"
+      : track === "seville"
+      ? "music/Kana%20Inukai%20-%20Yeon%20Yihwa.mp3"
+      : "music/Kevin%20Penkin%20-%20Caf%C3%A8%20Music%20d%E2%80%99Orth.mp3";
+    currentStoryTrack = track;
+    palaceMusic.volume = 0;
+  }
+  if (restart) { palaceMusic.currentTime = 0; palaceMusic.volume = 0; }
+  palaceMusic.play().then(() => fadePalaceMusic(.3, 1800)).catch(() => {});
+}
 
 function playDrumStrike() {
   try {
@@ -157,11 +179,10 @@ function startPalaceScene() {
   magellanFrame = -1;
   manuelFrame = -1;
   manuelSprite.style.backgroundImage = 'url("assets/manuel-expressions.png")';
-  palaceMusic.currentTime = 0;
-  palaceMusic.volume = 0;
-  palaceMusic.play().then(() => fadePalaceMusic(.3, 2400)).catch(() => {});
+  playSceneMusic("portugal", true);
   // Apply the new background only while the black transition is fully covering it.
   changeScene(true, 3000, () => {
+    document.getElementById("main-menu").classList.remove("is-docks", "is-ocean");
     document.getElementById("main-menu").classList.add("is-palace", "is-entrance");
   });
 }
@@ -182,6 +203,7 @@ function setPalaceBackdrop(showEntrance) {
 function renderOpening() {
   clearInterval(typingTimer);
   saveProgress();
+  if (storyLocation === "philippines") { renderVoyagePassage(); return; }
   const line = activeLines[openingIndex];
   if (line.choice) { showSpainChoices(); return; }
   if (storyLocation === "portugal") setPalaceBackdrop(openingIndex < 4 || openingIndex === palaceLines.length - 1);
@@ -199,22 +221,32 @@ function renderOpening() {
   speakerElement.textContent = line.speaker || "Narration";
   speakerElement.hidden = !line.speaker;
   nextDialogue.disabled = false;
-  textElement.textContent = skipTypewriter ? text : "";
+  paintDialogueText(textElement, skipTypewriter ? text : "", line.italic);
   if (skipTypewriter) updateCharacterSprites();
   if (!skipTypewriter) {
     typingTimer = setInterval(() => {
       visibleCharacters = Math.min(visibleCharacters + 2, text.length);
-      textElement.textContent = text.slice(0, visibleCharacters);
+      paintDialogueText(textElement, text.slice(0, visibleCharacters), line.italic);
       if (visibleCharacters >= text.length) { clearInterval(typingTimer); isTyping = false; dialoguePanel.classList.add("is-ready"); }
       if (visibleCharacters >= text.length) updateCharacterSprites();
     }, 24);
   }
+}
+function paintDialogueText(element, text, italic) {
+  if (!italic || !text.includes(italic)) { element.textContent = text; return; }
+  const start = text.indexOf(italic);
+  const emphasis = document.createElement("em");
+  emphasis.textContent = italic;
+  element.replaceChildren(text.slice(0, start), emphasis, text.slice(start + italic.length));
 }
 async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   if (transitioning) return;
   transitioning = true;
   clearInterval(typingTimer);
   clearTimeout(backdropTimer);
+  clearTimeout(introTimer);
+  introAdvance = null;
+  chapterTitle.hidden = true;
   document.querySelector(".story-choices")?.setAttribute("hidden", "");
   storyScreen.classList.remove("is-choosing");
   transitionLayer.classList.add("is-dark");
@@ -225,7 +257,7 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   menuMessage.hidden = showStory;
   menuMessage.textContent = "";
   storyScreen.hidden = !showStory;
-  if (!showStory) document.getElementById("main-menu").classList.remove("is-palace", "is-entrance");
+  if (!showStory) document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean");
   if (showStory) storyScreen.classList.toggle("is-waiting", dialogueDelay > 0);
   transitionLayer.classList.remove("is-dark");
   await new Promise(resolve => setTimeout(resolve, delay));
@@ -250,7 +282,7 @@ nextDialogue.addEventListener("click", () => {
   if (activeLines[openingIndex]?.choice) return;
   if (isTyping) {
     clearInterval(typingTimer);
-    document.getElementById("dialogue-text").textContent = activeLines[openingIndex].text;
+    paintDialogueText(document.getElementById("dialogue-text"), activeLines[openingIndex].text, activeLines[openingIndex].italic);
     isTyping = false;
     updateCharacterSprites();
     skipTypewriter = true;
@@ -259,6 +291,9 @@ nextDialogue.addEventListener("click", () => {
   }
   if (openingIndex < activeLines.length - 1) { openingIndex++; renderOpening(); }
   else if (storyLocation === "portugal") { startSpainScene(); }
+  else if (storyLocation === "spain") { startSevilleScene(); }
+  else if (storyLocation === "preparations") { startDepartureScene(); }
+  else if (storyLocation === "departure") { startOceanScene(); }
   else { fadePalaceMusic(0, 1800); changeScene(false); }
 });
 document.addEventListener("keydown", event => {

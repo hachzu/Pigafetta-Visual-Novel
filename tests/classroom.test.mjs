@@ -26,7 +26,7 @@ function game() {
     matchMedia:()=>({matches:true}), clearInterval(){},clearTimeout(){},setTimeout:callback=>{callback();return 1},setInterval:()=>1,
     requestAnimationFrame:callback=>callback(), console
   });
-  for (const file of ['script.js','spain.js','intro.js','session.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
+  for (const file of ['script.js','spain.js','departure.js','philippines.js','intro.js','session.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
   return {run:code=>vm.runInContext(code,context), storage};
 }
 
@@ -56,4 +56,15 @@ test('choice checkpoints save and restore without falling into narration', async
   g.run("storyLocation='spain'; activeLines=spainOpening; openingIndex=2; saveProgress();");
   await g.run('continueSavedGame()');
   assert.equal(g.run('activeLines[openingIndex].choice'),true);
+});
+
+test('preparations and departure checkpoints restore their scene and cast', async () => {
+  for (const location of ['preparations', 'departure']) {
+    const g = game();
+    g.run(`storyLocation='${location}'; activeLines=${location === 'preparations' ? 'preparationLines' : 'departureLines'}; openingIndex=1; saveProgress(); storyLocation='portugal';`);
+    await g.run('continueSavedGame()');
+    assert.equal(g.run('storyLocation'), location);
+    assert.equal(g.run('openingIndex'), 1);
+    assert.match(g.run('manuelSprite.style.backgroundImage'), location === 'preparations' ? /rui-expressions/ : /pigafetta-expressions/);
+  }
 });

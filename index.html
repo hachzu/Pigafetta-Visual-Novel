@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="style.css">
   <script src="script.js" defer></script>
   <script src="spain.js" defer></script>
+  <script src="departure.js" defer></script>
+  <script src="philippines.js" defer></script>
   <script src="intro.js" defer></script>
   <script src="session.js" defer></script>
   <script type="module" src="classroom.js"></script>
@@ -38,6 +40,7 @@
       <nav class="menu-buttons" aria-label="Main menu">
         <button type="button" class="menu-btn" data-action="new-game"><span class="label">New Game</span></button>
         <button type="button" class="menu-btn" data-action="continue"><span class="label">Continue</span></button>
+        <button type="button" class="menu-btn" data-action="chapters"><span class="label">Chapters</span></button>
         <button type="button" class="menu-btn" data-action="settings"><span class="label">Settings</span></button>
         <button type="button" class="menu-btn" data-action="credits"><span class="label">Credits</span></button>
       </nav>
@@ -65,5 +68,13 @@
     </section>
   </main>
   <div id="scene-transition" aria-hidden="true"></div>
+  <dialog id="chapters-menu" class="classroom-dialog chapters-menu" aria-labelledby="chapters-title">
+    <h2 id="chapters-title">Chapters</h2>
+    <button type="button" data-chapter="portugal">Lisbon, Portugal</button>
+    <button type="button" data-chapter="spain">Valladolid, Spain</button>
+    <button type="button" data-chapter="preparations">Seville, Spain</button>
+    <button type="button" data-chapter="departure">The Departure</button>
+    <button type="button" id="chapters-close">Back</button>
+  </dialog>
 </body>
 </html>

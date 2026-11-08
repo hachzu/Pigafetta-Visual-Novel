@@ -268,6 +268,8 @@ body {
 .game-menu-panel p { font: 14px/1.5 Georgia, serif; color: #d4c7ad; }
 .classroom-dialog { width: min(560px, calc(100% - 32px)); background: #121316; color: #f3ead9; border: 1px solid #b3a185; border-radius: 10px; padding: 28px; }
 .classroom-dialog::backdrop { background: #000b; }
+.chapters-menu h2 { margin: 0 0 20px; text-align: center; font-family: var(--title-font); }
+.chapters-menu button { margin: 12px 0; }
 .classroom-dialog input, .audience-page input { width: 100%; padding: 14px; font: 22px Georgia, serif; margin: 10px 0; }
 .room-banner { position: fixed; top: 14px; left: 18px; z-index: 20; max-width: 270px; padding: 10px 14px; border: 1px solid #a99a80; border-radius: 5px; background: #101114ed; font: 16px/1.5 Georgia, serif; overflow-wrap: anywhere; }
 .room-banner a { color: #f2d9a4; }
@@ -325,6 +327,12 @@ body {
 @media(max-width:600px) { .character-sprite { bottom: calc(4vh + 220px); width: 58vw; } .magellan-sprite { right: -12%; } .manuel-sprite { left: -12%; } }
 #main-menu.is-palace { background: url("assets/throneroom.png") center / cover no-repeat; }
 #main-menu.is-palace.is-entrance { background-image: url("assets/royal-chambers-entrance.png"); }
+#main-menu.is-docks { background: url("assets/docks.png") center / cover no-repeat; }
+#main-menu.is-ocean { background: url("assets/straitoftenerife.png") center / cover no-repeat; }
+.chapter-title { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; pointer-events: none; color: #fff3db; text-shadow: 0 3px 14px #000, 0 1px 4px #000; font: clamp(32px, 5vw, 64px)/1.2 var(--title-font); text-align: center; opacity: 0; transition: opacity 1s ease; }
+.chapter-title.is-visible { opacity: 1; }
+.chapter-title.voyage-copy { padding: 10vh clamp(28px, 12vw, 180px); display: block; align-content: center; font: clamp(20px, 2.2vw, 28px)/1.75 "Redaction 35", Georgia, serif; pointer-events: auto; cursor: pointer; background: #0005; }
+@media(prefers-reduced-motion:reduce) { .chapter-title { transition: none; } }
 .dialogue { width: 100%; max-width: 1160px; margin: 0 auto; position: relative; }
 .dialogue-enter { animation: dialogue-arrive .65s cubic-bezier(.2,.75,.25,1) both; }
 @keyframes dialogue-arrive { from { opacity: 0; transform: translateY(30px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }

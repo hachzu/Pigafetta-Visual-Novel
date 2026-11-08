@@ -24,29 +24,41 @@ function saveProgress() {
   }
 }
 
-async function continueSavedGame() {
-  if (!hasSave() || transitioning) { showMessage("No saved story is available."); return; }
-  const save = JSON.parse(localStorage.getItem(SAVE_KEY));
+async function continueSavedGame(checkpoint = null) {
+  if (transitioning) return;
+  if (!checkpoint && !hasSave()) { showMessage("No saved story is available."); return; }
+  const save = checkpoint || JSON.parse(localStorage.getItem(SAVE_KEY));
   transitioning = true;
   transitionLayer.classList.add("is-dark");
   const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
   await new Promise(resolve => setTimeout(resolve, delay));
+  clearInterval(typingTimer);
+  clearTimeout(backdropTimer);
+  clearTimeout(introTimer);
+  introAdvance = null;
+  choicePanel.hidden = true;
+  chapterTitle.hidden = true;
+  storyScreen.classList.remove("is-choosing");
   activeLines = save.lines;
   openingIndex = save.index;
-  storyLocation = save.location === "spain" ? "spain" : "portugal";
+  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines"].includes(save.location) ? save.location : "portugal";
   const main = document.getElementById("main-menu");
   main.classList.add("is-palace");
+  main.classList.toggle("is-docks", storyLocation === "preparations" || storyLocation === "departure");
+  main.classList.toggle("is-ocean", storyLocation === "ocean" || storyLocation === "philippines");
   main.classList.toggle("is-entrance", storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1));
   manuelSprite.style.backgroundImage = storyLocation === "spain" ? 'url("assets/charles-expressions.png")' : 'url("assets/manuel-expressions.png")';
+  if (storyLocation === "preparations") manuelSprite.style.backgroundImage = 'url("assets/rui-expressions.png")';
+  if (storyLocation === "departure") manuelSprite.style.backgroundImage = 'url("assets/pigafetta-expressions.png")';
   magellanFrame = -1;
   manuelFrame = -1;
   menuColumn.hidden = true;
   menuMessage.hidden = true;
   introScreen.hidden = true;
   storyScreen.hidden = false;
-  storyScreen.classList.remove("is-waiting");
+  storyScreen.classList.toggle("is-waiting", storyLocation === "philippines");
   renderOpening();
-  palaceMusic.play().then(() => fadePalaceMusic(.3, 1000)).catch(() => {});
+  if (storyLocation !== "ocean") playSceneMusic(storyLocation);
   transitionLayer.classList.remove("is-dark");
   await new Promise(resolve => setTimeout(resolve, delay));
   transitioning = false;
@@ -68,4 +80,15 @@ document.getElementById("return-menu").addEventListener("click", async () => {
     introStart.disabled = false;
     introStart.classList.remove("is-gone");
   });
+});
+
+document.getElementById("chapters-close").addEventListener("click", () => {
+  document.getElementById("chapters-menu").close();
+});
+document.getElementById("chapters-menu").addEventListener("click", event => {
+  const chapter = event.target.closest("[data-chapter]")?.dataset.chapter;
+  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines };
+  if (!chapters[chapter] || transitioning) return;
+  document.getElementById("chapters-menu").close();
+  continueSavedGame({ location: chapter, lines: chapters[chapter], index: 0 });
 });

@@ -56,7 +56,12 @@ function render() {
     form.hidden = false;
     return;
   }
-  const round = room.rounds?.["I-02"];
+  const roundId = room.activeRound || "I-02";
+  if (choices.dataset.round !== roundId) {
+    choices.replaceChildren();
+    choices.dataset.round = roundId;
+  }
+  const round = room.rounds?.[roundId];
   renderDialogue(room.story);
   if (!round) {
     status.textContent = "Voting will appear here! Please keep an eye on the projector.";
@@ -112,7 +117,8 @@ async function castVote(index) {
   sending = true;
   render();
   try {
-    await client.runTransaction(client.ref(client.db, `rooms/${code}/rounds/I-02/votes/${client.uid}`), () => index, { applyLocally: false });
+    const roundId = room.activeRound || "I-02";
+    await client.runTransaction(client.ref(client.db, `rooms/${code}/rounds/${roundId}/votes/${client.uid}`), () => index, { applyLocally: false });
   } catch { status.textContent = "Voting is closed or unavailable."; }
   finally { sending = false; render(); }
 }

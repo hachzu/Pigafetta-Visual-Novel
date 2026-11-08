@@ -41,9 +41,13 @@ async function continueSavedGame(checkpoint = null) {
   storyScreen.classList.remove("is-choosing");
   activeLines = save.lines;
   openingIndex = save.index;
-  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines"].includes(save.location) ? save.location : "portugal";
+  storyLocation = ["spain", "preparations", "departure", "ocean", "philippines", "homonhon"].includes(save.location) ? save.location : "portugal";
   const main = document.getElementById("main-menu");
+  main.classList.remove("is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
+  homonhonBackdrop = "";
+  lastStoryMusicCue = "";
   main.classList.add("is-palace");
+  main.classList.toggle("is-homonhon", storyLocation === "homonhon");
   main.classList.toggle("is-docks", storyLocation === "preparations" || storyLocation === "departure");
   main.classList.toggle("is-ocean", storyLocation === "ocean" || storyLocation === "philippines");
   main.classList.toggle("is-entrance", storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1));
@@ -87,7 +91,7 @@ document.getElementById("chapters-close").addEventListener("click", () => {
 });
 document.getElementById("chapters-menu").addEventListener("click", event => {
   const chapter = event.target.closest("[data-chapter]")?.dataset.chapter;
-  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines };
+  const chapters = { portugal: palaceLines, spain: spainOpening, preparations: preparationLines, departure: departureLines, homonhon: homonhonOpening };
   if (!chapters[chapter] || transitioning) return;
   document.getElementById("chapters-menu").close();
   continueSavedGame({ location: chapter, lines: chapters[chapter], index: 0 });

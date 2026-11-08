@@ -71,6 +71,7 @@ function renderVoyagePassage() {
         chapterTitle.style.transitionDuration = "";
         introAdvance = null;
         window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
+        startHomonhonScene();
       }
     }, fade);
   };

@@ -72,6 +72,7 @@ let isTyping = false;
 let visibleCharacters = 0;
 let skipTypewriter = false;
 let backdropTimer = 0;
+let homonhonBackdrop = "island";
 let magellanFrame = -1;
 let manuelFrame = -1;
 const storyScreen = document.getElementById("story-screen");
@@ -91,6 +92,11 @@ function updateCharacterSprites(speakingLineStarted = false) {
   const manuelTalking = line.speaker === companion;
   manuelSprite.hidden = storyLocation === "ocean" || (storyLocation === "departure" && openingIndex >= 5) || storyLocation === "portugal" && (openingIndex < 4 || openingIndex === palaceLines.length - 1);
   magellanSprite.hidden = storyLocation === "ocean";
+  if (storyLocation === "homonhon") {
+    manuelSprite.hidden = true;
+    // Magellan makes his entrance only with his first line, then stays in the scene.
+    magellanSprite.hidden = !activeLines.slice(0, openingIndex + 1).some(entry => entry.speaker === "Ferdinand Magellan");
+  }
   // Only entering a talking pose gets the pop animation.
   const nextMagellanFrame = magellanTalking ? 1 : magellanEmotion;
   const nextManuelFrame = manuelTalking ? 1 : manuelEmotion;
@@ -123,9 +129,10 @@ palaceMusic.preload = "auto";
 palaceMusic.volume = 0;
 let palaceMusicFadeTimer = 0;
 let currentStoryTrack = "palace";
+let lastStoryMusicCue = "";
 
 function playSceneMusic(scene, restart = false) {
-  const track = scene === "philippines" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
+  const track = scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
   clearInterval(palaceMusicFadeTimer);
   if (currentStoryTrack !== track) {
     palaceMusic.src = track === "philippines"
@@ -173,6 +180,23 @@ function fadePalaceMusic(target, duration = 2000) {
   }, 40);
 }
 
+function playStoryMusicCue(cue) {
+  if (!cue || cue === lastStoryMusicCue) return;
+  lastStoryMusicCue = cue;
+  if (cue !== "native-arrival") return;
+
+  // Let the Philippine-arc music leave gently before the arrival cue enters.
+  const fadeDuration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1200;
+  fadePalaceMusic(0, fadeDuration);
+  setTimeout(() => {
+    palaceMusic.src = "music/Kevin%20Penkin%20-%20Line.mp3";
+    palaceMusic.currentTime = 0;
+    palaceMusic.volume = 0;
+    currentStoryTrack = "native-arrival";
+    palaceMusic.play().then(() => fadePalaceMusic(.3, 1600)).catch(() => {});
+  }, fadeDuration);
+}
+
 function startPalaceScene() {
   storyLocation = "portugal";
   activeLines = palaceLines;
@@ -182,7 +206,7 @@ function startPalaceScene() {
   playSceneMusic("portugal", true);
   // Apply the new background only while the black transition is fully covering it.
   changeScene(true, 3000, () => {
-    document.getElementById("main-menu").classList.remove("is-docks", "is-ocean");
+    document.getElementById("main-menu").classList.remove("is-docks", "is-ocean", "is-homonhon");
     document.getElementById("main-menu").classList.add("is-palace", "is-entrance");
   });
 }
@@ -200,6 +224,28 @@ function setPalaceBackdrop(showEntrance) {
   }, fadeDuration);
 }
 
+function setHomonhonBackdrop(backdrop = "island") {
+  if (homonhonBackdrop === backdrop) return;
+  homonhonBackdrop = backdrop;
+  const mainMenu = document.getElementById("main-menu");
+  const classes = ["is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat"];
+  const selected = backdrop === "ship"
+    ? "is-homonhon-ship"
+    : backdrop === "anchorage"
+    ? "is-homonhon-anchorage"
+    : backdrop === "native-boat"
+    ? "is-homonhon-native-boat"
+    : "";
+  clearTimeout(backdropTimer);
+  const fadeDuration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 500;
+  transitionLayer.classList.add("is-dark");
+  backdropTimer = setTimeout(() => {
+    mainMenu.classList.remove(...classes);
+    if (selected) mainMenu.classList.add(selected);
+    requestAnimationFrame(() => transitionLayer.classList.remove("is-dark"));
+  }, fadeDuration);
+}
+
 function renderOpening() {
   clearInterval(typingTimer);
   saveProgress();
@@ -207,6 +253,8 @@ function renderOpening() {
   const line = activeLines[openingIndex];
   if (line.choice) { showSpainChoices(); return; }
   if (storyLocation === "portugal") setPalaceBackdrop(openingIndex < 4 || openingIndex === palaceLines.length - 1);
+  if (storyLocation === "homonhon") setHomonhonBackdrop(line.homonhonBackdrop || "island");
+  if (line.musicCue) setTimeout(() => playStoryMusicCue(line.musicCue), 0);
   const text = line.text;
   window.classroom?.syncDialogue?.({ speaker: line.speaker || "", text, direction: Boolean(line.direction) });
   const textElement = document.getElementById("dialogue-text");
@@ -257,7 +305,10 @@ async function changeScene(showStory, dialogueDelay = 0, prepareScene = null) {
   menuMessage.hidden = showStory;
   menuMessage.textContent = "";
   storyScreen.hidden = !showStory;
-  if (!showStory) document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean");
+  if (!showStory) {
+    document.getElementById("main-menu").classList.remove("is-palace", "is-entrance", "is-docks", "is-ocean", "is-homonhon", "is-homonhon-ship", "is-homonhon-anchorage", "is-homonhon-native-boat");
+    homonhonBackdrop = "";
+  }
   if (showStory) storyScreen.classList.toggle("is-waiting", dialogueDelay > 0);
   transitionLayer.classList.remove("is-dark");
   await new Promise(resolve => setTimeout(resolve, delay));

@@ -1,5 +1,9 @@
 # King Charles I sprite
 
+## Homonhon island
+
+Built-in image generation. Saved as homonhon.png. Prompt: Simple imperfect hand-painted wide tropical Homonhon island coast viewed from sea, blue-green water, pale curving sand, loosely drawn coconut palms, broad jungle shapes, low green hills, blue sky and soft clouds. Use straitoftenerife.png as the style reference. Broad flat matte colors, sparse brushwork, no people, boats, writing, gloss, intricate textures or photorealism.
+
 ## Seville sprites
 
 Built-in image generation, using charles-expressions.png for style and framing. Saved as rui-expressions.png and pigafetta-expressions.png. Each transparent sheet has three aligned frames: attentive, talking, thoughtful (Rui) or smiling (Pigafetta).

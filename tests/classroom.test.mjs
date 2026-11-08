@@ -26,7 +26,7 @@ function game() {
     matchMedia:()=>({matches:true}), clearInterval(){},clearTimeout(){},setTimeout:callback=>{callback();return 1},setInterval:()=>1,
     requestAnimationFrame:callback=>callback(), console
   });
-  for (const file of ['script.js','spain.js','departure.js','philippines.js','intro.js','session.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
+  for (const file of ['script.js','spain.js','departure.js','philippines.js','homonhon.js','intro.js','session.js']) vm.runInContext(fs.readFileSync(new URL('../'+file,import.meta.url),'utf8'),context);
   return {run:code=>vm.runInContext(code,context), storage};
 }
 
@@ -56,6 +56,20 @@ test('choice checkpoints save and restore without falling into narration', async
   g.run("storyLocation='spain'; activeLines=spainOpening; openingIndex=2; saveProgress();");
   await g.run('continueSavedGame()');
   assert.equal(g.run('activeLines[openingIndex].choice'),true);
+});
+
+test('all Homonhon paths join the native encounter and restore the island scene', async () => {
+  for (let index = 0; index < 3; index++) {
+    const g = game();
+    g.run(`storyLocation='homonhon'; activeLines=homonhonOpening; openingIndex=2; choiceSelectionOpen=true; selectSpainChoice(${index});`);
+    assert.equal(g.run('currentChoiceSet().id'), 'II-01');
+    assert.equal(g.run('activeLines.at(-1).direction'), true);
+    assert.match(g.run('activeLines.at(-1).text'), /Two balanghais/);
+    assert.equal(g.run('activeLines.at(-1).homonhonBackdrop'), 'native-boat');
+    await g.run('continueSavedGame()');
+    assert.equal(g.run('storyLocation'), 'homonhon');
+    assert.equal(g.run('manuelSprite.hidden'), true);
+  }
 });
 
 test('preparations and departure checkpoints restore their scene and cast', async () => {

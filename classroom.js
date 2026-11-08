@@ -55,7 +55,7 @@ function attachRoom(code) {
   const currentLine = activeLines?.[openingIndex];
   if (!storyScreen.hidden && currentLine) {
     syncDialogue(currentLine.choice
-      ? { speaker: "", text: "How will you plead with the King of Spain?", direction: false }
+      ? { speaker: "", text: currentChoiceSet().question, direction: false }
       : { speaker: currentLine.speaker || "", text: currentLine.text, direction: Boolean(currentLine.direction) });
   }
   banner.hidden = false;
@@ -175,17 +175,18 @@ function makeRoomPanelDraggable(handle) {
   });
 }
 
-async function openVote(panel, choices, complete) {
+async function openVote(panel, choices, complete, roundId = "I-02", question = "How will you plead with the King of Spain?") {
   clearInterval(tick);
-  pendingChoice = { panel, choices, complete };
+  pendingChoice = { panel, choices, complete, roundId };
   delete panel.dataset.voteState;
   panel.textContent = "Opening audience vote…";
   try {
-    const path = client.ref(client.db, `rooms/${roomCode}/rounds/I-02`);
+    const path = client.ref(client.db, `rooms/${roomCode}/rounds/${roundId}`);
     await client.runTransaction(path, current => current || {
-      question: "How will you plead with the King of Spain?",
+      question,
       options: choices.map(choice => choice.label), status: "open", endsAt: client.now() + seconds * 1000
     });
+    await client.set(client.ref(client.db, `rooms/${roomCode}/activeRound`), roundId);
     drawVote();
     tick = setInterval(drawVote, 250);
   } catch (error) { panel.textContent = errorText(error); }
@@ -193,7 +194,7 @@ async function openVote(panel, choices, complete) {
 
 function drawVote() {
   if (!pendingChoice) return;
-  const round = room?.rounds?.["I-02"];
+  const round = room?.rounds?.[pendingChoice.roundId];
   if (!round) return;
   if (Number.isInteger(round.winner)) {
     const done = pendingChoice.complete;
@@ -240,7 +241,7 @@ async function closeVote() {
   try {
     // The deadline in database rules has already stopped new votes. Close and
     // count atomically, including any vote committed just before the deadline.
-    await client.runTransaction(client.ref(client.db, `rooms/${roomCode}/rounds/I-02`), round => {
+    await client.runTransaction(client.ref(client.db, `rooms/${roomCode}/rounds/${pendingChoice.roundId}`), round => {
       if (!round || round.status !== "open" || client.now() < round.endsAt) return;
       const { leaders } = tally(round);
       return { ...round, status: leaders.length === 1 ? "closed" : "tie", ...(leaders.length === 1 ? { winner: leaders[0] } : {}) };
@@ -251,7 +252,7 @@ async function closeVote() {
 
 async function chooseWinner(index, hostChoice = false) {
   try {
-    await client.runTransaction(client.ref(client.db, `rooms/${roomCode}/rounds/I-02`), round => {
+    await client.runTransaction(client.ref(client.db, `rooms/${roomCode}/rounds/${pendingChoice.roundId}`), round => {
       const noAudience = Object.keys(room?.presence || {}).filter(uid => uid !== client.uid).length === 0;
       const validTieBreak = round?.status === "tie" && tally(round).leaders.includes(index);
       const validHostChoice = hostChoice && round?.status === "open" && noAudience;

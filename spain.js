@@ -43,6 +43,11 @@ choicePanel.setAttribute("aria-label", "How will you plead with the King of Spai
 choicePanel.hidden = true;
 storyScreen.prepend(choicePanel);
 let choiceSelectionOpen = false;
+function currentChoiceSet() {
+  return storyLocation === "homonhon"
+    ? { id: "II-01", question: "How will you respond to the discovery?", choices: homonhonChoices, common: homonhonCommon }
+    : { id: "I-02", question: "How will you plead with the King of Spain?", choices: spainChoices, common: spainCommon };
+}
 
 function showSpainChoices() {
   choiceSelectionOpen = true;
@@ -53,16 +58,18 @@ function showSpainChoices() {
   speakerElement.hidden = true;
   const text = document.getElementById("dialogue-text");
   text.classList.remove("is-direction");
-  text.textContent = "How will you plead with the King of Spain?";
+  const selection = currentChoiceSet();
+  text.textContent = selection.question;
+  choicePanel.setAttribute("aria-label", selection.question);
   choicePanel.dataset.prompt = text.textContent;
   window.classroom?.syncDialogue?.({ speaker: "", text: text.textContent, direction: false });
   choicePanel.replaceChildren();
   if (window.classroom?.isHost()) {
     choicePanel.hidden = false;
-    window.classroom.openVote(choicePanel, spainChoices, selectSpainChoice);
+    window.classroom.openVote(choicePanel, selection.choices, selectSpainChoice, selection.id, selection.question);
     return;
   }
-  spainChoices.forEach((choice, index) => {
+  selection.choices.forEach((choice, index) => {
     const button = document.createElement("button");
     button.textContent = choice.label;
     button.addEventListener("click", () => {
@@ -75,11 +82,12 @@ function showSpainChoices() {
 }
 
 function selectSpainChoice(index) {
-  if (!choiceSelectionOpen || !activeLines[openingIndex]?.choice || !spainChoices[index]) return;
+  const selection = currentChoiceSet();
+  if (!choiceSelectionOpen || !activeLines[openingIndex]?.choice || !selection.choices[index]) return;
   choiceSelectionOpen = false;
   storyScreen.classList.remove("is-choosing");
   choicePanel.hidden = true;
-  activeLines = [...spainChoices[index].lines, ...spainCommon];
+  activeLines = [...selection.choices[index].lines, ...selection.common];
   openingIndex = 0;
   renderOpening();
   nextDialogue.focus({ preventScroll: true });

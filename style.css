@@ -329,6 +329,10 @@ body {
 #main-menu.is-palace.is-entrance { background-image: url("assets/royal-chambers-entrance.png"); }
 #main-menu.is-docks { background: url("assets/docks.png") center / cover no-repeat; }
 #main-menu.is-ocean { background: url("assets/straitoftenerife.png") center / cover no-repeat; }
+#main-menu.is-homonhon { background: url("assets/homonhon.png") center / cover no-repeat; }
+#main-menu.is-homonhon.is-homonhon-ship { background-image: url("assets/interiorship.png"); }
+#main-menu.is-homonhon.is-homonhon-anchorage { background-image: url("assets/shore.png"); }
+#main-menu.is-homonhon.is-homonhon-native-boat { background-image: url("assets/shore.png"); }
 .chapter-title { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; pointer-events: none; color: #fff3db; text-shadow: 0 3px 14px #000, 0 1px 4px #000; font: clamp(32px, 5vw, 64px)/1.2 var(--title-font); text-align: center; opacity: 0; transition: opacity 1s ease; }
 .chapter-title.is-visible { opacity: 1; }
 .chapter-title.voyage-copy { padding: 10vh clamp(28px, 12vw, 180px); display: block; align-content: center; font: clamp(20px, 2.2vw, 28px)/1.75 "Redaction 35", Georgia, serif; pointer-events: auto; cursor: pointer; background: #0005; }

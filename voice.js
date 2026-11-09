@@ -122,7 +122,8 @@ try { voiceOn = localStorage.getItem(VOICE_PREF_KEY) !== "off"; } catch { /* def
 
 // Each entry holds the clip for one line. If its file is missing, the next extension is tried.
 function loadVoiceExtension(entry, index) {
-  const audio = new Audio(`${VOICE_FOLDER}[${entry.id}]${VOICE_EXTENSIONS[index]}`);
+  const fileName = entry.id === "LAPU-LAPU" ? entry.id : `[${entry.id}]`;
+  const audio = new Audio(`${VOICE_FOLDER}${fileName}${VOICE_EXTENSIONS[index]}`);
   audio.preload = "auto";
   entry.audio = audio;
   audio.addEventListener("error", () => {

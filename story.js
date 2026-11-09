@@ -724,7 +724,8 @@ const mactanLines = [
   { ...magellanLine("Retreat! Protect the others!"), cg: true, momentBackdrop: "is-mactan-battle" },
   // From the fall onward the sprites step out so no one is left standing on screen.
   { ...stageDirection("Magellan falls beneath the attacks of the Mactan warriors."), clearStage: true, cg: true, momentBackdrop: "is-magellan-dies" },
-  { ...pigafettaNarration("Our Captain-General had fallen. The man who had led us across the vast Pacific Ocean had met his end upon the shores of Mactan."), clearStage: true, cg: true, momentBackdrop: "is-magellan-dies" },
+  // musicCue: MAUL gives way to "The Everyday Feels" just after Magellan's death.
+  { ...pigafettaNarration("Our Captain-General had fallen. The man who had led us across the vast Pacific Ocean had met his end upon the shores of Mactan."), clearStage: true, cg: true, momentBackdrop: "is-magellan-dies", musicCue: "magellan-death" },
   { ...stageDirection("The surviving Spanish soldiers retreat toward their boats."), clearStage: true }
 ];
 
@@ -737,6 +738,7 @@ async function startMactanScene() {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fade = reduced ? 0 : 1500;
   transitionLayer.style.transitionDuration = `${fade}ms`;
+  fadePalaceMusic(0, Math.max(fade, 1));
   transitionLayer.classList.add("is-dark");
   await wait(fade);
   storyScreen.classList.add("is-waiting");
@@ -748,6 +750,8 @@ async function startMactanScene() {
   cebuBackdrop = "";
   leftCast = "";
   storyLocation = "mactan";
+  lastStoryMusicCue = "";
+  playSceneMusic("mactan", true);
   activeLines = mactanLines;
   openingIndex = 0;
   magellanFrame = -1;
@@ -928,6 +932,8 @@ async function startNarratedScene(location, lines, backdrop, title) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fade = reduced ? 0 : 1500;
   transitionLayer.style.transitionDuration = `${fade}ms`;
+  // Only fade the music out when this scene is actually switching to a different track.
+  if (SCENE_TRACKS[location] && SCENE_TRACKS[location] !== currentStoryTrack) fadePalaceMusic(0, Math.max(fade, 1));
   transitionLayer.classList.add("is-dark");
   await wait(fade);
   storyScreen.classList.add("is-waiting");
@@ -936,6 +942,7 @@ async function startNarratedScene(location, lines, backdrop, title) {
   setStoryBackdrop(backdrop);
   leftCast = "";
   storyLocation = location;
+  playSceneMusic(location);
   activeLines = lines;
   openingIndex = 0;
   magellanFrame = -1;
@@ -1030,7 +1037,7 @@ function startHomecomingScene() {
   return startNarratedScene("homecoming", homecomingLines, "is-docks", "Sanl\u00facar de Barrameda, Spain");
 }
 
-// The screen fades to black, "THE END" appears, then the game returns to the main menu.
+// The screen fades to black, "THE END" appears over "Tomorrow", then the game returns to the main menu.
 async function startTheEnd() {
   if (transitioning) return;
   transitioning = true;
@@ -1041,11 +1048,12 @@ async function startTheEnd() {
   const fade = reduced ? 0 : 4000;
   window.classroom?.syncDialogue?.({ speaker: "", text: "", direction: false });
   transitionLayer.style.transitionDuration = `${fade}ms`;
-  fadePalaceMusic(0, fade + 2000);
+  fadePalaceMusic(0, Math.max(fade, 1));
   transitionLayer.classList.add("is-dark");
   await wait(fade);
   storyScreen.classList.add("is-waiting");
   setStoryBackdrop("is-end");
+  playSceneMusic("end", true);
   chapterTitle.classList.remove("voyage-copy", "is-visible");
   chapterTitle.textContent = "THE END";
   chapterTitle.hidden = false;
@@ -1054,6 +1062,7 @@ async function startTheEnd() {
   void chapterTitle.offsetWidth;
   chapterTitle.classList.add("is-visible");
   await wait(reduced ? 3000 : 5000);
+  fadePalaceMusic(0, 2000);
   chapterTitle.classList.remove("is-visible");
   await wait(1000);
   chapterTitle.hidden = true;

@@ -183,40 +183,65 @@ let voiceMusicDucked = false;
 let voiceMusicFadeTimer = 0;
 let storyMusicTargetVolume = .3;
 
+// While a voice clip plays, the music sits at VOICE_DUCK_LEVEL of its normal volume.
+// Ducking goes through fadePalaceMusic, the same timer every other fade uses, so a duck that starts or
+// ends in the middle of a fade-in or fade-out never fights it: the fade carries on to the new level.
+const VOICE_DUCK_LEVEL = .12;
+let palaceMusicFadeTarget = 0;   // normal (un-ducked) level the music is heading to or resting at
+let palaceMusicFadeEndsAt = 0;   // when the current fade finishes (a past time means no fade is running)
+
 function setVoiceMusicDucked(ducked) {
+  if (voiceMusicDucked === ducked) return;
   voiceMusicDucked = ducked;
-  clearInterval(voiceMusicFadeTimer);
-  const target = palaceMusic.volume === 0 && ducked ? 0 : ducked ? storyMusicTargetVolume * .12 : storyMusicTargetVolume;
-  const start = palaceMusic.volume;
-  const steps = 8;
-  let step = 0;
-  voiceMusicFadeTimer = setInterval(() => {
-    step++;
-    palaceMusic.volume = Math.max(0, Math.min(1, start + (target - start) * step / steps));
-    if (step >= steps) clearInterval(voiceMusicFadeTimer);
-  }, 25);
+  const remaining = palaceMusicFadeEndsAt - Date.now();
+  fadePalaceMusic(palaceMusicFadeTarget, remaining > 200 ? remaining : 200);
 }
 window.setVoiceMusicDucked = setVoiceMusicDucked;
 
+// ----- Story music tracks -----
+// New tracks live in music/ with lowercase, underscored names. If a file is named differently,
+// change it here and nowhere else.
+const musicFile = name => "music/" + encodeURIComponent(name);
+const STORY_TRACK_FILES = {
+  palace: "music/Kevin%20Penkin%20-%20Caf%C3%A8%20Music%20d%E2%80%99Orth.mp3",
+  seville: "music/Kana%20Inukai%20-%20Yeon%20Yihwa.mp3",
+  philippines: "music/Kevin%20Penkin%20-%20Atla%20%26%20Fohl.mp3",
+  limasawa: "music/Kevin%20Penkin%20-%20Days%20in%20the%20Sun.mp3",
+  cebu: "music/Kevin%20Penkin%20-%20Rafters.mp3",
+  "native-arrival": "music/Kevin%20Penkin%20-%20Line.mp3",
+  mactan: musicFile("maul.mp3"),
+  aftermath: musicFile("the_everyday_feels.mp3"),
+  homeward: musicFile("remembering_home.mp3"),
+  outro: musicFile("tomorrow.mp3"),
+};
+// Which track each scene uses. Scenes sharing a track continue without restarting.
+const SCENE_TRACKS = {
+  cebu: "cebu",
+  limasawa: "limasawa",
+  philippines: "philippines", homonhon: "philippines",
+  preparations: "seville", departure: "seville",
+  mactan: "mactan",
+  actthree: "aftermath", massacre: "aftermath",
+  brunei: "homeward", tidore: "homeward", returnvoyage: "homeward", homecoming: "homeward",
+  end: "outro",
+};
+// One-off cues set on a line with `musicCue`.
+const STORY_CUE_TRACKS = { "native-arrival": "native-arrival", "magellan-death": "aftermath" };
+
 function playSceneMusic(scene, restart = false) {
-  const track = ["cebu", "mactan", "actthree", "massacre", "brunei", "tidore", "returnvoyage", "homecoming"].includes(scene) ? "cebu" : scene === "limasawa" ? "limasawa" : scene === "philippines" || scene === "homonhon" ? "philippines" : scene === "preparations" || scene === "departure" ? "seville" : "palace";
+  let track = SCENE_TRACKS[scene] || "palace";
+  // Continuing mid-Mactan after Magellan's death should resume the aftermath track.
+  if (scene === "mactan" && activeLines.slice(0, openingIndex + 1).some(entry => entry.musicCue === "magellan-death")) track = "aftermath";
   clearInterval(palaceMusicFadeTimer);
   if (currentStoryTrack !== track) {
-    palaceMusic.src = track === "cebu"
-      ? "music/Kevin%20Penkin%20-%20Rafters.mp3"
-      : track === "limasawa"
-      ? "music/Kevin%20Penkin%20-%20Days%20in%20the%20Sun.mp3"
-      : track === "philippines"
-      ? "music/Kevin%20Penkin%20-%20Atla%20%26%20Fohl.mp3"
-      : track === "seville"
-      ? "music/Kana%20Inukai%20-%20Yeon%20Yihwa.mp3"
-      : "music/Kevin%20Penkin%20-%20Caf%C3%A8%20Music%20d%E2%80%99Orth.mp3";
+    palaceMusic.src = STORY_TRACK_FILES[track];
     currentStoryTrack = track;
     palaceMusic.volume = 0;
+    palaceMusicFadeTarget = 0; palaceMusicFadeEndsAt = 0;
   }
-  if (restart) { palaceMusic.currentTime = 0; palaceMusic.volume = 0; }
+  if (restart) { palaceMusic.currentTime = 0; palaceMusic.volume = 0; palaceMusicFadeTarget = 0; palaceMusicFadeEndsAt = 0; }
   storyMusicTargetVolume = .3;
-  palaceMusic.play().then(() => fadePalaceMusic(voiceMusicDucked ? .3 * .12 : .3, 1800)).catch(() => {});
+  palaceMusic.play().then(() => fadePalaceMusic(.3, 1800)).catch(() => {});
 }
 
 function playDrumStrike() {
@@ -240,10 +265,13 @@ function playDrumStrike() {
   } catch { /* Location title still appears if sound is unavailable. */ }
 }
 
+// `target` is the music's normal volume; the duck level is applied here, never by the caller.
 function fadePalaceMusic(target, duration = 2000) {
   clearInterval(palaceMusicFadeTimer);
+  palaceMusicFadeTarget = target;
+  palaceMusicFadeEndsAt = Date.now() + duration;
   const start = palaceMusic.volume;
-  const adjustedTarget = voiceMusicDucked ? target * .12 : target;
+  const adjustedTarget = voiceMusicDucked ? target * VOICE_DUCK_LEVEL : target;
   const steps = Math.max(1, Math.round(duration / 40));
   let step = 0;
   palaceMusicFadeTimer = setInterval(() => {
@@ -254,20 +282,22 @@ function fadePalaceMusic(target, duration = 2000) {
 }
 
 function playStoryMusicCue(cue) {
-  if (!cue || cue === lastStoryMusicCue) return;
+  const track = STORY_CUE_TRACKS[cue];
+  if (!track || cue === lastStoryMusicCue) return;
   lastStoryMusicCue = cue;
-  if (cue !== "native-arrival") return;
+  if (currentStoryTrack === track) return;
 
-  // Let the Philippine-arc music leave gently before the arrival cue enters.
+  // Let the current music leave gently before the cue's track enters.
   const fadeDuration = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 1200;
   fadePalaceMusic(0, fadeDuration);
   setTimeout(() => {
-    palaceMusic.src = "music/Kevin%20Penkin%20-%20Line.mp3";
+    palaceMusic.src = STORY_TRACK_FILES[track];
     palaceMusic.currentTime = 0;
     palaceMusic.volume = 0;
-    currentStoryTrack = "native-arrival";
+    palaceMusicFadeTarget = 0; palaceMusicFadeEndsAt = 0;
+    currentStoryTrack = track;
     storyMusicTargetVolume = .3;
-    palaceMusic.play().then(() => fadePalaceMusic(voiceMusicDucked ? .3 * .12 : .3, 1600)).catch(() => {});
+    palaceMusic.play().then(() => fadePalaceMusic(.3, 1600)).catch(() => {});
   }, fadeDuration);
 }
 

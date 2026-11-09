@@ -6,6 +6,10 @@
 // Keep the list of available clips in sync with the files in voice/ to avoid requests for missing clips.
 // Lines are matched by their exact text, so saved games and branches work without changing story.js.
 // If a line's text is edited, update its entry here; a line with no match simply plays silently.
+//
+// Music ducking: the story music drops while a clip is playing and comes back the moment the clip ends,
+// is skipped, fails to load, or voice acting is switched off. The actual volume changes live in engine.js
+// (setVoiceMusicDucked); this file only says when speech starts and stops.
 const VOICE_FOLDER = "voice/";
 const VOICE_EXTENSIONS = [".mp3", ".m4a", ".wav"];
 const VOICE_PREF_KEY = "pigafetta-voice";
@@ -120,12 +124,26 @@ let voiceEntry = null;
 let voiceOn = true;
 try { voiceOn = localStorage.getItem(VOICE_PREF_KEY) !== "off"; } catch { /* default to on */ }
 
+// Music ducking hooks (the volume work happens in engine.js and story.js).
+function duckMusic() {
+  window.setVoiceMusicDucked?.(true);
+  window.setIntroMusicVoiceDucked?.(true);
+}
+function releaseMusic() {
+  window.setVoiceMusicDucked?.(false);
+  window.setIntroMusicVoiceDucked?.(false);
+}
+
 // Each entry holds the clip for one line. If its file is missing, the next extension is tried.
 function loadVoiceExtension(entry, index) {
   const fileName = entry.id === "LAPU-LAPU" ? entry.id : `[${entry.id}]`;
   const audio = new Audio(`${VOICE_FOLDER}${fileName}${VOICE_EXTENSIONS[index]}`);
   audio.preload = "auto";
   entry.audio = audio;
+  // The clip finished by itself: bring the music back up without waiting for the player's next click.
+  audio.addEventListener("ended", () => {
+    if (voiceEntry === entry && entry.audio === audio) releaseMusic();
+  });
   audio.addEventListener("error", () => {
     if (entry.audio !== audio) return;
     if (index + 1 < VOICE_EXTENSIONS.length) {
@@ -133,6 +151,7 @@ function loadVoiceExtension(entry, index) {
       if (voiceEntry === entry) startVoice(entry); // the line is on screen now, so retry right away
     } else {
       entry.failed = true; // no file under any extension: this line stays silent
+      if (voiceEntry === entry) releaseMusic(); // nobody is speaking, so the music must not stay ducked
     }
   });
 }
@@ -148,38 +167,43 @@ function voiceClipFor(id) {
 }
 
 function startVoice(entry) {
-  if (entry.failed) return;
-  try { entry.audio.currentTime = 0; } catch { /* clip not loaded yet */ }
-  entry.audio.play().then(() => {
-    if (voiceEntry !== entry) return;
-    window.setVoiceMusicDucked?.(true);
-    window.setIntroMusicVoiceDucked?.(true);
-  }).catch(() => {}); // a missing file or blocked audio must never stop the story
+  if (entry.failed) { if (voiceEntry === entry) releaseMusic(); return; }
+  const audio = entry.audio;
+  try { audio.currentTime = 0; } catch { /* clip not loaded yet */ }
+  audio.play().then(() => {
+    if (voiceEntry !== entry || entry.audio !== audio) return;
+    duckMusic();
+  }).catch(() => {
+    // A missing file or blocked audio must never stop the story, and must never leave the music ducked.
+    // (If the file was swapped for the next extension, the retry takes over, so stay out of its way.)
+    if (voiceEntry === entry && entry.audio === audio) releaseMusic();
+  });
 }
 
-function stopVoice() {
+// keepDucked: the next line is also voiced, so leave the music ducked instead of letting it swell for an instant.
+function stopVoice(keepDucked = false) {
   if (voiceEntry) {
     voiceEntry.audio.pause();
     try { voiceEntry.audio.currentTime = 0; } catch { /* clip not loaded yet */ }
   }
   voiceEntry = null;
-  window.setVoiceMusicDucked?.(false);
-  window.setIntroMusicVoiceDucked?.(false);
+  if (!keepDucked) releaseMusic();
 }
 
 // Plays the line's clip (if it has one) and warms up the next line's clip so it starts without delay.
 function playVoice(line, nextLine) {
-  stopVoice();
+  const id = voiceOn ? voiceIdByText.get(line?.text) : undefined;
+  const hasClip = Boolean(id && VOICE_CLIPS.has(id));
+  stopVoice(hasClip);
   if (!voiceOn) return;
   const nextId = voiceIdByText.get(nextLine?.text);
   if (nextId && VOICE_CLIPS.has(nextId)) voiceClipFor(nextId);
-  const id = voiceIdByText.get(line?.text);
-  if (!id || !VOICE_CLIPS.has(id)) return;
+  if (!hasClip) return;
   voiceEntry = voiceClipFor(id);
   startVoice(voiceEntry);
 }
 
-window.voice = { play: playVoice, stop: stopVoice, currentAudio: () => voiceEntry?.audio || null };
+window.voice = { play: playVoice, stop: () => stopVoice(), currentAudio: () => voiceEntry?.audio || null };
 
 const voiceToggle = document.getElementById("voice-toggle");
 function paintVoiceToggle() {

@@ -242,7 +242,7 @@ body {
 .story-screen.is-waiting .character-stage { visibility: hidden; }
 .character-stage { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 /* The figures rise from the dialogue's upper edge, rather than sitting at the screen sides. */
-.character-sprite { position: absolute; bottom: calc(clamp(20px, 4vh, 48px) + 185px); width: min(52vh, 39vw); aspect-ratio: 1; background-repeat: no-repeat; background-size: 300% 100%; background-position: 0 0; transition: filter .25s ease, opacity .25s ease; }
+.character-sprite { position: absolute; bottom: calc(clamp(20px, 4vh, 48px) + 185px); width: min(62svh, 43vw, 724px); aspect-ratio: 1 / 1; background-repeat: no-repeat; background-size: 300% 100%; background-position: 0 0; transition: filter .25s ease, opacity .25s ease; }
 .magellan-sprite { right: 14%; background-image: url("assets/magellan-expressions.png"); transform: scaleX(-1); }
 .manuel-sprite { left: 14%; background-image: url("assets/manuel-expressions.png"); }
 .character-sprite.is-listening { filter: brightness(.78); }
@@ -325,7 +325,7 @@ body {
 @keyframes magellan-pose-pop { 0% { transform: scaleX(-1) translateY(14px) scale(.985); } 58% { transform: scaleX(-1) translateY(-7px) scale(1.01); } 100% { transform: scaleX(-1) translateY(0) scale(1); } }
 @keyframes manuel-pose-pop { 0% { transform: translateY(14px) scale(.985); } 58% { transform: translateY(-7px) scale(1.01); } 100% { transform: translateY(0) scale(1); } }
 .dialogue { z-index: 2; }
-@media(max-width:600px) { .character-sprite { bottom: calc(4vh + 220px); width: 58vw; } .magellan-sprite { right: -12%; } .manuel-sprite { left: -12%; } }
+@media(max-width:600px) { .character-sprite { bottom: calc(4vh + 220px); width: min(74vw, 440px); } .magellan-sprite { right: -12%; } .manuel-sprite { left: -12%; } .story-screen.is-cg .dialogue { max-width: calc(100% - 24px); } .story-screen.is-cg .dialogue-panel { min-height: 104px; padding: 20px 18px; } }
 #main-menu.is-palace { background: url("assets/throneroom.png") center / cover no-repeat; }
 #main-menu.is-palace.is-entrance { background-image: url("assets/royal-chambers-entrance.png"); }
 #main-menu.is-docks { background: url("assets/docks.png") center / cover no-repeat; }
@@ -337,15 +337,23 @@ body {
 #main-menu.is-limasawa { background: url("assets/limasawashore.png") center / cover no-repeat #0e1620; }
 #main-menu.is-limasawa.is-limasawa-cg { background: url("assets/CGCROSS.png") center / cover no-repeat #0e1620; }
 .story-screen.is-cg .character-stage { visibility: hidden; }
+.story-screen.is-cg .dialogue { max-width: min(760px, calc(100% - 32px)); }
+.story-screen.is-cg .dialogue-panel { min-height: 132px; padding: 26px clamp(22px, 3vw, 38px); background: rgb(5 5 5 / .92); }
+.story-screen.is-cg #dialogue-text { min-height: 0; font-size: clamp(18px, 1.7vw, 22px); line-height: 1.45; }
 .character-stage { transition: opacity .5s ease; }
 .story-screen.is-stage-clear .character-stage { opacity: 0; }
 @media(prefers-reduced-motion:reduce) { .character-stage { transition: none; } }
-#main-menu.is-departs-cebu { background: url("assets/fleet-departs-cebu.png") center / cover no-repeat #05090d; }
+#main-menu.is-departs-cebu { background: url("assets/cebu-fleet.png") center / cover no-repeat #05090d; }
 #main-menu.is-cebu { background: url("assets/cebu-port.png") center / cover no-repeat #0e1620; }
 #main-menu.is-cebu.is-cebu-square { background: url("assets/cebu-town-square.png") center / cover no-repeat #0e1620; }
 #main-menu.is-mactan { background: url("assets/mactan-shore.png") center / cover no-repeat #0e1620; }
 #main-menu.is-brunei { background: url("assets/brunei.png") center / cover no-repeat #0e1620; }
 #main-menu.is-tidore { background: url("assets/tidore.png") center / cover no-repeat #0e1620; }
+#main-menu.is-mactan-battle { background: url("assets/mactanbattle.png") center / cover no-repeat #0e1620; }
+#main-menu.is-magellan-dies { background: url("assets/magellandies.png") center / cover no-repeat #0e1620; }
+#main-menu.is-banquish-cebu { background: url("assets/banquishcebu.png") center / cover no-repeat #0e1620; }
+#main-menu.is-humamay-nino { background: url("assets/humamaynino.png") center / cover no-repeat #0e1620; }
+#main-menu.is-victoria-returns { background: url("assets/victoriasreturn.png") center / cover no-repeat #0e1620; }
 #main-menu.is-end { background: #05090d; }
 .chapter-title { position: absolute; inset: 0; z-index: 8; display: grid; place-items: center; pointer-events: none; color: #fff3db; text-shadow: 0 3px 14px #000, 0 1px 4px #000; font: clamp(32px, 5vw, 64px)/1.2 var(--title-font); text-align: center; opacity: 0; transition: opacity 1s ease; }
 .chapter-title.is-visible { opacity: 1; }

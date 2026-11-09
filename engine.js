@@ -96,7 +96,13 @@ const manuelSprite = document.getElementById("manuel-sprite");
 let leftCast = "";
 // Left-slot characters in the Homonhon, Limasawa and Cebu scenes.
 const castNames = { natives: "Natives", enrique: "Enrique of Malacca", calambu: "Rajah Calambu", humabon: "Rajah Humabon", humamay: "Hara Humamay", lapulapu: "Lapu-Lapu", pigafetta: "Antonio Pigafetta" };
-const castSheets = { natives: "natives-expressions-square.png", enrique: "enrique-expressions-square.png", calambu: "rajah-calambu-expressions-square.png", humabon: "rajah-humabon-expressions-square.png", humamay: "hara-humamay-expressions-square.png", lapulapu: "lapu-lapu-expressions-square.png", pigafetta: "pigafetta-expressions.png" };
+const castSheets = { natives: "natives-expressions-square.png", enrique: "enrique-expressions-square.png", calambu: "rajah-calambu-expressions-square.png", humabon: "rajah-humabon-expressions.png", humamay: "hara-humamay-expressions.png", lapulapu: "lapulapu-expressions.png", pigafetta: "pigafetta-expressions.png" };
+const momentBackdropClasses = ["is-mactan-battle", "is-magellan-dies", "is-banquish-cebu", "is-humamay-nino", "is-victoria-returns"];
+function setMomentBackdrop(backdrop = "") {
+  const mainMenu = document.getElementById("main-menu");
+  mainMenu.classList.remove(...momentBackdropClasses);
+  if (momentBackdropClasses.includes(backdrop)) mainMenu.classList.add(backdrop);
+}
 function castOf(speaker) {
   if (!speaker) return "";
   if (speaker.startsWith("Native")) return "natives";
@@ -349,6 +355,8 @@ function renderOpening() {
   saveProgress();
   if (storyLocation === "philippines" || storyLocation === "actthree") { renderVoyagePassage(); return; }
   const line = activeLines[openingIndex];
+  setMomentBackdrop(line.momentBackdrop);
+  storyScreen.classList.toggle("is-cg", Boolean(line.cg));
   if (line.choice) { showSpainChoices(); return; }
   if (line.card) { showTransitionCard(line); return; }
   if (storyLocation === "portugal") setPalaceBackdrop(openingIndex < 4 || openingIndex === palaceLines.length - 1);

@@ -516,7 +516,7 @@ async function startLimasawaScene() {
   nextDialogue.focus({ preventScroll: true });
 }
 
-// Transition card: the fleet leaves Limasawa for Cebu. Art goes in assets/fleet-departs-cebu.png.
+// Transition card: the fleet leaves Limasawa for Cebu.
 // Afterwards the story continues in Cebu.
 async function startCebuTransition() {
   if (transitioning) return;
@@ -550,7 +550,7 @@ async function startCebuTransition() {
   transitioning = false;
   startCebuScene();
 }
-for (const source of ["limasawashore.png", "CGCROSS.png", "fleet-departs-cebu.png"]) {
+for (const source of ["limasawashore.png", "CGCROSS.png", "cebu-fleet.png"]) {
   const preload = new Image();
   preload.src = `assets/${source}`;
 }
@@ -586,10 +586,10 @@ const cebuCommon = [
     { ...stageDirection("Royal trumpets sound as Hara Humamay arrives at the square."), with: "humamay" },
     humamayLine("Karon, magsugod ang bag-ong panahon para sa among mga tawo. Hinaot nga magdala kini og kalinaw."),
     stageDirection("Hara Humamay accepts her Christian name, Doña Juana."),
-    stageDirection("Magellan approaches her carrying the statue of the Child Jesus."),
-    magellanLine("Your Highness, take this Holy Child Jesus. Let Him replace your former idols and keep Him as a guardian over you and your people."),
-    { speaker: "Hara Humamay (Doña Juana)", text: "Salamat kaayo, Kapitan. Dawaton nako kini ug ampingan." },
-    stageDirection("Hara Humamay receives the statue.")
+    { ...stageDirection("Magellan approaches her carrying the statue of the Child Jesus."), cg: true, momentBackdrop: "is-humamay-nino" },
+    { ...magellanLine("Your Highness, take this Holy Child Jesus. Let Him replace your former idols and keep Him as a guardian over you and your people."), cg: true, momentBackdrop: "is-humamay-nino" },
+    { speaker: "Hara Humamay (Doña Juana)", text: "Salamat kaayo, Kapitan. Dawaton nako kini ug ampingan.", cg: true, momentBackdrop: "is-humamay-nino" },
+    { ...stageDirection("Hara Humamay receives the statue."), cg: true, momentBackdrop: "is-humamay-nino" }
   ])
 ];
 const cebuChoices = [
@@ -716,15 +716,15 @@ const mactanLines = [
   lapuLapuLine("Umalis na kayo sa aming lupain!"),
   stageDirection("The warriors of Mactan prepare to defend their territory."),
   magellanLine("Men! Advance!"),
-  stageDirection("The battle begins."),
-  stageDirection("The Mactan warriors attack the Spanish soldiers. The difficult terrain prevents the Spanish forces from advancing effectively."),
-  pigafettaNarration("Our weapons and armor, which had previously inspired fear among the inhabitants we encountered, proved insufficient against the warriors of Mactan. The shallow waters prevented our ships from providing effective support, and our men struggled to advance through the unfamiliar terrain."),
-  stageDirection("Magellan is wounded during the battle."),
-  stageDirection("His men begin retreating toward the boats."),
-  magellanLine("Retreat! Protect the others!"),
+  { ...stageDirection("The battle begins."), cg: true, momentBackdrop: "is-mactan-battle" },
+  { ...stageDirection("The Mactan warriors attack the Spanish soldiers. The difficult terrain prevents the Spanish forces from advancing effectively."), cg: true, momentBackdrop: "is-mactan-battle" },
+  { ...pigafettaNarration("Our weapons and armor, which had previously inspired fear among the inhabitants we encountered, proved insufficient against the warriors of Mactan. The shallow waters prevented our ships from providing effective support, and our men struggled to advance through the unfamiliar terrain."), cg: true, momentBackdrop: "is-mactan-battle" },
+  { ...stageDirection("Magellan is wounded during the battle."), cg: true, momentBackdrop: "is-mactan-battle" },
+  { ...stageDirection("His men begin retreating toward the boats."), cg: true, momentBackdrop: "is-mactan-battle" },
+  { ...magellanLine("Retreat! Protect the others!"), cg: true, momentBackdrop: "is-mactan-battle" },
   // From the fall onward the sprites step out so no one is left standing on screen.
-  { ...stageDirection("Magellan falls beneath the attacks of the Mactan warriors."), clearStage: true },
-  { ...pigafettaNarration("Our Captain-General had fallen. The man who had led us across the vast Pacific Ocean had met his end upon the shores of Mactan."), clearStage: true },
+  { ...stageDirection("Magellan falls beneath the attacks of the Mactan warriors."), clearStage: true, cg: true, momentBackdrop: "is-magellan-dies" },
+  { ...pigafettaNarration("Our Captain-General had fallen. The man who had led us across the vast Pacific Ocean had met his end upon the shores of Mactan."), clearStage: true, cg: true, momentBackdrop: "is-magellan-dies" },
   { ...stageDirection("The surviving Spanish soldiers retreat toward their boats."), clearStage: true }
 ];
 
@@ -802,7 +802,7 @@ async function startActThreeIntro() {
   main.classList.remove("is-mactan");
   main.classList.add("is-ocean");
   chapterTitle.classList.remove("voyage-copy", "is-visible");
-  chapterTitle.textContent = "ACT III \u2014 AFTER MAGELLAN'S DEATH";
+  chapterTitle.textContent = "After Magellan's Death";
   chapterTitle.hidden = false;
   transitionLayer.classList.remove("is-dark");
   void chapterTitle.offsetWidth;
@@ -822,11 +822,11 @@ async function startActThreeIntro() {
 
 const massacreLines = [
   pigafettaNarration("After the death of our Captain-General, we attempted to preserve the friendship we had established with the ruler of Cebu. Rajah Humabon invited several of our men to a banquet, promising gifts and continued cooperation."),
-  stageDirection("The Spanish officers gather for the banquet."),
+  { ...stageDirection("The Spanish officers gather for the banquet."), cg: true, momentBackdrop: "is-banquish-cebu" },
   pigafettaNarration("What appeared to be an ordinary gathering would soon become another tragedy for our expedition."),
-  stageDirection("The banquet turns into an ambush."),
-  stageDirection("Several Spanish officers are attacked and killed."),
-  pigafettaNarration("The banquet had been a trap. Many of our companions perished, including Duarte Barbosa, who had assumed command following Magellan's death."),
+  { ...stageDirection("The banquet turns into an ambush."), cg: true, momentBackdrop: "is-banquish-cebu" },
+  { ...stageDirection("Several Spanish officers are attacked and killed."), cg: true, momentBackdrop: "is-banquish-cebu" },
+  { ...pigafettaNarration("The banquet had been a trap. Many of our companions perished, including Duarte Barbosa, who had assumed command following Magellan's death."), cg: true, momentBackdrop: "is-banquish-cebu" },
   stageDirection("The surviving crew withdraws toward the ships."),
   pigafettaNarration("With our numbers diminished and our trust in the inhabitants shattered, we could no longer remain in Cebu. We were forced to abandon the island and continue our journey.")
 ];
@@ -1018,13 +1018,13 @@ function startReturnVoyageScene() {
 // ===== Scene III-05: Completion of the Expedition =====
 
 const homecomingLines = [
-  stageDirection("The Victoria approaches the coastline."),
-  stageDirection("After nearly three years at sea, the surviving crew finally returns to Spain."),
-  { ...pigafettaNarration("On September 6, 1522, the Victoria returned to Spain. Of the five ships and approximately 270 men who departed with us, only one ship and eighteen men completed the circumnavigation."), italic: "Victoria" },
+  { ...stageDirection("The Victoria approaches the coastline."), momentBackdrop: "is-victoria-returns" },
+  { ...stageDirection("After nearly three years at sea, the surviving crew finally returns to Spain."), momentBackdrop: "is-victoria-returns" },
+  { ...pigafettaNarration("On September 6, 1522, the Victoria returned to Spain. Of the five ships and approximately 270 men who departed with us, only one ship and eighteen men completed the circumnavigation."), italic: "Victoria", momentBackdrop: "is-victoria-returns" },
   stageDirection("The surviving crew disembarks."),
   pigafettaNarration("Ferdinand Magellan did not live to witness the completion of the expedition he had envisioned. Nevertheless, his undertaking had demonstrated that the Earth could be circumnavigated by sea."),
-  stageDirection("The view shifts toward the Victoria, its sails lowered and its hull weathered by years of travel."),
-  pigafettaNarration("We departed in search of spices, wealth, and a western passage to the East Indies. We returned with something far greater: proof of a journey that would forever change humanity's understanding of the world.")
+  { ...stageDirection("The view shifts toward the Victoria, its sails lowered and its hull weathered by years of travel."), momentBackdrop: "is-victoria-returns" },
+  { ...pigafettaNarration("We departed in search of spices, wealth, and a western passage to the East Indies. We returned with something far greater: proof of a journey that would forever change humanity's understanding of the world."), momentBackdrop: "is-victoria-returns" }
 ];
 function startHomecomingScene() {
   return startNarratedScene("homecoming", homecomingLines, "is-docks", "Sanl\u00facar de Barrameda, Spain");
@@ -1061,7 +1061,7 @@ async function startTheEnd() {
   transitioning = false;
   changeScene(false);
 }
-for (const source of ["mactan-shore.png", "lapu-lapu-expressions-square.png", "brunei.png", "tidore.png"]) {
+for (const source of ["mactan-shore.png", "lapulapu-expressions.png", "brunei.png", "tidore.png", "cebu-fleet.png", "mactanbattle.png", "magellandies.png", "banquishcebu.png", "humamaynino.png", "victoriasreturn.png"]) {
   const preload = new Image();
   preload.src = `assets/${source}`;
 }
